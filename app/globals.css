@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Professional Black & Yellow Brand Theme */
+    --background: 0 0% 4%; /* Deep black background #0a0a0a */
+    --foreground: 0 0% 98%; /* High contrast white text */
+    --card: 0 0% 7%; /* Slightly lighter black for cards */
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 38 92% 50%; /* Brand yellow #f59e0b */
+    --primary-foreground: 0 0% 0%; /* Black text on yellow */
+    --secondary: 0 0% 15%; /* Dark gray */
+    --secondary-foreground: 0 0% 95%;
+    --muted: 0 0% 12%; /* Muted dark background */
+    --muted-foreground: 0 0% 60%; /* Light gray text */
+    --accent: 38 92% 50%; /* Yellow accent */
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%; /* Red for errors */
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 20%; /* Dark borders */
+    --input: 0 0% 15%; /* Dark input backgrounds */
+    --ring: 38 92% 50%; /* Yellow focus rings */
+    --chart-1: 38 92% 50%; /* Brand yellow */
+    --chart-2: 142 71% 45%; /* Success green */
+    --chart-3: 217 91% 60%; /* Blue */
+    --chart-4: 0 84% 60%; /* Red */
+    --chart-5: 262 83% 58%; /* Purple */
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 3%; /* Darker sidebar */
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 38 92% 50%; /* Yellow sidebar primary */
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%; /* Dark sidebar accent */
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 38 92% 50%;
+  }
+
+  .light {
+    /* Light mode fallback - maintains yellow primary with dark text */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 38 92% 50%; /* Brand yellow */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 90%;
+    --input: 0 0% 96%;
+    --ring: 38 92% 50%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer components {
+  /* Brand-specific component styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary/50 transition-all duration-200 font-medium;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+  }
+
+  .btn-outline {
+    @apply border border-primary text-primary hover:bg-primary hover:text-primary-foreground focus:ring-2 focus:ring-primary/50 transition-all duration-200;
+  }
+
+  .card-branded {
+    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200;
+  }
+
+  .input-branded {
+    @apply bg-input border border-border rounded-md px-3 py-2 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200;
+  }
+
+  .link-branded {
+    @apply text-primary hover:text-primary/80 transition-colors duration-200 underline-offset-4 hover:underline;
+  }
+
+  .text-brand-gradient {
+    @apply bg-gradient-to-r from-primary to-yellow-300 bg-clip-text text-transparent;
+  }
+
+  .bg-brand-gradient {
+    @apply bg-gradient-to-r from-primary to-yellow-300;
+  }
+}
+
+@layer utilities {
+  /* Brand utility classes */
+  .shadow-brand {
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
+  }
+
+  .glow-brand {
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  }
+
+  .border-brand {
+    border-color: hsl(var(--primary));
+  }
+
+  /* Accessibility utilities */
+  .focus-visible {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .text-brand-gradient {
+      @apply text-primary;
+      background: none;
+      -webkit-background-clip: unset;
+      -webkit-text-fill-color: unset;
+    }
+
+    .btn-primary {
+      @apply border-2 border-primary;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Dark mode improvements for better contrast */
+  .dark .text-muted-foreground {
+    color: hsl(0 0% 70%); /* Increased contrast */
+  }
+
+  .dark .border-border {
+    border-color: hsl(0 0% 25%); /* Better border visibility */
+  }
+}

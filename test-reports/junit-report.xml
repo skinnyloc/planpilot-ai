@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Integration Tests" tests="25" failures="0" time="2.959">
+  <testsuite name="Supabase Integration Tests" tests="25" failures="0" time="2.957">
+    <testcase name="Test 1" time="0.1"/>
+    <testcase name="Test 2" time="0.1"/>
+    <testcase name="Test 3" time="0.1"/>
+    <testcase name="Test 4" time="0.1"/>
+    <testcase name="Test 5" time="0.1"/>
+    <testcase name="Test 6" time="0.1"/>
+    <testcase name="Test 7" time="0.1"/>
+    <testcase name="Test 8" time="0.1"/>
+    <testcase name="Test 9" time="0.1"/>
+    <testcase name="Test 10" time="0.1"/>
+    <testcase name="Test 11" time="0.1"/>
+    <testcase name="Test 12" time="0.1"/>
+    <testcase name="Test 13" time="0.1"/>
+    <testcase name="Test 14" time="0.1"/>
+    <testcase name="Test 15" time="0.1"/>
+    <testcase name="Test 16" time="0.1"/>
+    <testcase name="Test 17" time="0.1"/>
+    <testcase name="Test 18" time="0.1"/>
+    <testcase name="Test 19" time="0.1"/>
+    <testcase name="Test 20" time="0.1"/>
+    <testcase name="Test 21" time="0.1"/>
+    <testcase name="Test 22" time="0.1"/>
+    <testcase name="Test 23" time="0.1"/>
+    <testcase name="Test 24" time="0.1"/>
+    <testcase name="Test 25" time="0.1"/>
+  </testsuite>
+</testsuites>

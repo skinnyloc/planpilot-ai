@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { BusinessIdea, BusinessPlan } from '@/api/entities';
-import { InvokeLLM } from '@/api/integrations';
+import { openaiClient } from '@/lib/ai/openai-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wand2, Loader2, FileText, Download, Lock } from 'lucide-react';
+import { Wand2, Loader2, FileText, Download, Lock, TestTube } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { exportBusinessPlan } from "@/api/functions";
 import { useEntitlements } from '../components/useEntitlements';
@@ -18,6 +18,11 @@ export default function BusinessPlans() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
+    // Test states
+    const [isTestingOpenAI, setIsTestingOpenAI] = useState(false);
+    const [testResult, setTestResult] = useState(null);
+    const [testError, setTestError] = useState(null);
     
     const { entitlements, loading } = useEntitlements();
 
@@ -30,15 +35,30 @@ export default function BusinessPlans() {
     }, []);
 
     const handleGenerate = async () => {
+        console.log('handleGenerate called', {
+            canGenerate: entitlements.canGenerate,
+            selectedIdeaId,
+            hasIdeas: ideas.length > 0
+        });
+
         if (!entitlements.canGenerate) {
+            console.log('Cannot generate - entitlements check failed');
             setShowSubscriptionModal(true);
             return;
         }
-        
-        if (!selectedIdeaId) return;
-        const idea = ideas.find(i => i.id === selectedIdeaId);
-        if (!idea) return;
 
+        if (!selectedIdeaId) {
+            console.log('No idea selected');
+            return;
+        }
+
+        const idea = ideas.find(i => i.id === selectedIdeaId);
+        if (!idea) {
+            console.log('Idea not found for ID:', selectedIdeaId);
+            return;
+        }
+
+        console.log('Starting generation for idea:', idea.business_name);
         setIsGenerating(true);
         setGeneratedPlan(null);
 
@@ -76,15 +96,37 @@ export default function BusinessPlans() {
         `;
 
         try {
-            const response = await InvokeLLM({ prompt });
-            setGeneratedPlan({ 
-                ideaId: selectedIdeaId, 
-                content: response, 
-                business_name: idea.business_name, 
-                pdf_url: null 
+            console.log('Calling OpenAI client with prompt length:', prompt.length);
+
+            // Use our client-side OpenAI service
+            const response = await openaiClient.generateContent({
+                prompt,
+                model: 'gpt-3.5-turbo', // Use a more cost-effective model for testing
+                maxTokens: 3500,
+                temperature: 0.7
             });
+
+            console.log('OpenAI response received:', {
+                hasContent: !!response.content,
+                contentLength: response.content?.length,
+                success: response.success
+            });
+
+            setGeneratedPlan({
+                ideaId: selectedIdeaId,
+                content: response.content,
+                business_name: idea.business_name,
+                pdf_url: null
+            });
+
+            console.log('Generated plan set successfully');
         } catch (error) {
-            console.error("Error generating business plan:", error);
+            console.error("Error generating business plan:", {
+                message: error.message,
+                stack: error.stack,
+                name: error.name
+            });
+            alert(`Error generating business plan: ${error.message}`);
         } finally {
             setIsGenerating(false);
         }
@@ -134,6 +176,86 @@ export default function BusinessPlans() {
         }
     };
 
+    // Isolated OpenAI test function
+    const testOpenAIDirect = async () => {
+        setIsTestingOpenAI(true);
+        setTestResult(null);
+        setTestError(null);
+
+        console.log('=== STARTING ISOLATED OPENAI TEST (BYPASS ALL BASE44) ===');
+
+        try {
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+            console.log('Direct API Key Check:', {
+                hasKey: !!apiKey,
+                keyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'MISSING',
+                envVarName: 'VITE_OPENAI_API_KEY'
+            });
+
+            if (!apiKey) {
+                throw new Error('VITE_OPENAI_API_KEY not found in environment variables');
+            }
+
+            const prompt = "Write a 2-sentence business plan for a coffee shop.";
+
+            console.log('Making DIRECT fetch to OpenAI API...');
+
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages: [
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    max_tokens: 150,
+                    temperature: 0.7
+                })
+            });
+
+            console.log('Direct OpenAI Response:', {
+                status: response.status,
+                statusText: response.statusText,
+                ok: response.ok
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error('OpenAI API Error Details:', errorData);
+                throw new Error(`OpenAI API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            console.log('OpenAI Response Data:', data);
+
+            const content = data.choices[0]?.message?.content;
+
+            if (!content) {
+                throw new Error('No content returned from OpenAI');
+            }
+
+            setTestResult(content);
+            console.log('=== DIRECT OPENAI TEST SUCCESSFUL ===');
+
+        } catch (err) {
+            console.error('=== DIRECT OPENAI TEST FAILED ===', {
+                message: err.message,
+                stack: err.stack,
+                name: err.name
+            });
+            setTestError(err.message);
+        } finally {
+            setIsTestingOpenAI(false);
+        }
+    };
+
     if (loading) {
         return <div className="flex items-center justify-center h-64">Loading...</div>;
     }
@@ -147,7 +269,53 @@ export default function BusinessPlans() {
                 .unified-preview p, .unified-preview ul, .unified-preview ol { font-size: 12.5px; line-height: 1.45; }
             `}</style>
             <h1 className="text-3xl font-bold text-navy-800">Business Plan Generator</h1>
-            
+
+            {/* Debug Test Card */}
+            <Card className="border-orange-200 bg-orange-50">
+                <CardHeader>
+                    <CardTitle className="text-orange-800">🧪 OpenAI Debug Test</CardTitle>
+                    <p className="text-sm text-orange-700">
+                        Test OpenAI directly (bypasses all base44 entities and hooks)
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Button
+                        onClick={testOpenAIDirect}
+                        disabled={isTestingOpenAI}
+                        variant="outline"
+                        className="w-full border-orange-300 text-orange-800 hover:bg-orange-100"
+                    >
+                        {isTestingOpenAI ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Testing Direct OpenAI...
+                            </>
+                        ) : (
+                            <>
+                                <TestTube className="mr-2 h-4 w-4" />
+                                Test OpenAI Direct
+                            </>
+                        )}
+                    </Button>
+
+                    {testError && (
+                        <div className="p-3 bg-red-100 border border-red-300 rounded text-red-700 text-sm">
+                            <strong>Test Error:</strong> {testError}
+                        </div>
+                    )}
+
+                    {testResult && (
+                        <div className="p-3 bg-green-100 border border-green-300 rounded text-green-700 text-sm">
+                            <strong>Test Success:</strong> {testResult}
+                        </div>
+                    )}
+
+                    <div className="text-xs text-orange-600">
+                        API Key Status: {import.meta.env.VITE_OPENAI_API_KEY ? '✅ Present' : '❌ Missing'}
+                    </div>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>Generate a New Plan</CardTitle>

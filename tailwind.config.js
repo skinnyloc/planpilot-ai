@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     darkMode: ["class"],
-    content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
+    content: ["./app/**/*.{js,jsx,ts,tsx}"],
   theme: {
   	extend: {
   		borderRadius: {
@@ -10,6 +10,36 @@ module.exports = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		colors: {
+  			// Brand Color Palette - Professional Black & Yellow Theme
+  			brand: {
+  				yellow: {
+  					50: '#fffbeb',
+  					100: '#fef3c7',
+  					200: '#fde68a',
+  					300: '#fcd34d',
+  					400: '#fbbf24',
+  					500: '#f59e0b', // Primary yellow
+  					600: '#d97706',
+  					700: '#b45309',
+  					800: '#92400e',
+  					900: '#78350f',
+  					950: '#451a03'
+  				},
+  				black: {
+  					50: '#f8f8f8',
+  					100: '#f0f0f0',
+  					200: '#e4e4e4',
+  					300: '#d1d1d1',
+  					400: '#b4b4b4',
+  					500: '#9a9a9a',
+  					600: '#818181',
+  					700: '#6a6a6a',
+  					800: '#5a5a5a',
+  					900: '#4a4a4a',
+  					950: '#0a0a0a' // Deep black background
+  				}
+  			},
+  			// CSS Variable Based Colors (maintains shadcn/ui compatibility)
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -59,6 +89,23 @@ module.exports = {
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
+  			},
+  			// State Colors with High Contrast
+  			success: {
+  				DEFAULT: '#10b981', // Emerald green
+  				foreground: '#ffffff'
+  			},
+  			warning: {
+  				DEFAULT: '#f59e0b', // Brand yellow
+  				foreground: '#000000'
+  			},
+  			error: {
+  				DEFAULT: '#ef4444', // Red
+  				foreground: '#ffffff'
+  			},
+  			info: {
+  				DEFAULT: '#3b82f6', // Blue
+  				foreground: '#ffffff'
   			}
   		},
   		keyframes: {

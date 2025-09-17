@@ -1,0 +1,57 @@
+{
+  "summary": {
+    "totalSuites": 1,
+    "passedSuites": 1,
+    "failedSuites": 0,
+    "skippedSuites": 0,
+    "totalTests": 25,
+    "passedTests": 25,
+    "failedTests": 0,
+    "duration": 2959,
+    "coverage": null
+  },
+  "suites": [
+    {
+      "name": "Supabase Integration Tests",
+      "type": "integration",
+      "status": "passed",
+      "duration": 2957,
+      "tests": {
+        "total": 25,
+        "passed": 25,
+        "failed": 0
+      },
+      "critical": true,
+      "output": "{\"numTotalTestSuites\":13,\"numPassedTestSuites\":13,\"numFailedTestSuites\":0,\"numPendingTestSuites\":0,\"numTotalTests\":25,\"numPassedTests\":25,\"numFailedTests\":0,\"numPendingTests\":0,\"numTodoTests\":0,\"snapshot\":{\"added\":0,\"failure\":false,\"filesAdded\":0,\"filesRemoved\":0,\"filesRemovedList\":[],\"filesUnmatched\":0,\"filesUpdated\":0,\"matched\":0,\"total\":0,\"unchecked\":0,\"uncheckedKeysByFile\":[],\"unmatched\":0,\"updated\":0,\"didUpdate\":false},\"startTime\":1758122001662,\"success\":true,\"testResults\":[{\"assertionResults\":[{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Database Connection Tests\"],\"fullName\":\"Supabase Integration Tests Database Connection Tests should successfully connect to Supabase\",\"status\":\"passed\",\"title\":\"should successfully connect to Supabase\",\"duration\":1.8865000000000691,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Database Connection Tests\"],\"fullName\":\"Supabase Integration Tests Database Connection Tests should handle connection errors gracefully\",\"status\":\"passed\",\"title\":\"should handle connection errors gracefully\",\"duration\":0.3811670000000049,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"User Authentication Tests\"],\"fullName\":\"Supabase Integration Tests User Authentication Tests should authenticate user successfully\",\"status\":\"passed\",\"title\":\"should authenticate user successfully\",\"duration\":0.24487500000009277,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"User Authentication Tests\"],\"fullName\":\"Supabase Integration Tests User Authentication Tests should handle authentication errors\",\"status\":\"passed\",\"title\":\"should handle authentication errors\",\"duration\":0.11529199999995399,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Profiles Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Profiles Table should create a new profile\",\"status\":\"passed\",\"title\":\"should create a new profile\",\"duration\":0.22020799999995688,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Profiles Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Profiles Table should read profiles by user ID\",\"status\":\"passed\",\"title\":\"should read profiles by user ID\",\"duration\":0.28616599999986647,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Profiles Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Profiles Table should update profile information\",\"status\":\"passed\",\"title\":\"should update profile information\",\"duration\":0.2523750000000291,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Profiles Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Profiles Table should delete a profile\",\"status\":\"passed\",\"title\":\"should delete a profile\",\"duration\":0.12400000000002365,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Business Ideas Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Business Ideas Table should create a new business idea\",\"status\":\"passed\",\"title\":\"should create a new business idea\",\"duration\":0.5447500000000218,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Business Ideas Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Business Ideas Table should fetch user business ideas with pagination\",\"status\":\"passed\",\"title\":\"should fetch user business ideas with pagination\",\"duration\":0.552167000000054,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Business Ideas Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Business Ideas Table should update business idea status\",\"status\":\"passed\",\"title\":\"should update business idea status\",\"duration\":0.20195800000010422,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Documents Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Documents Table should store document metadata\",\"status\":\"passed\",\"title\":\"should store document metadata\",\"duration\":0.22262499999987995,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"CRUD Operations - Documents Table\"],\"fullName\":\"Supabase Integration Tests CRUD Operations - Documents Table should fetch documents by type\",\"status\":\"passed\",\"title\":\"should fetch documents by type\",\"duration\":0.20691600000009203,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Row Level Security (RLS) Tests\"],\"fullName\":\"Supabase Integration Tests Row Level Security (RLS) Tests should enforce user isolation in profiles table\",\"status\":\"passed\",\"title\":\"should enforce user isolation in profiles table\",\"duration\":0.3116250000000491,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Row Level Security (RLS) Tests\"],\"fullName\":\"Supabase Integration Tests Row Level Security (RLS) Tests should enforce user isolation in business_ideas table\",\"status\":\"passed\",\"title\":\"should enforce user isolation in business_ideas table\",\"duration\":0.12383399999998801,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Foreign Key Relationships Tests\"],\"fullName\":\"Supabase Integration Tests Foreign Key Relationships Tests should maintain referential integrity between profiles and business_ideas\",\"status\":\"passed\",\"title\":\"should maintain referential integrity between profiles and business_ideas\",\"duration\":0.16470800000001873,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Foreign Key Relationships Tests\"],\"fullName\":\"Supabase Integration Tests Foreign Key Relationships Tests should maintain referential integrity between documents and users\",\"status\":\"passed\",\"title\":\"should maintain referential integrity between documents and users\",\"duration\":0.10566700000003948,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Real-time Subscriptions Tests\"],\"fullName\":\"Supabase Integration Tests Real-time Subscriptions Tests should establish real-time subscription for business_ideas\",\"status\":\"passed\",\"title\":\"should establish real-time subscription for business_ideas\",\"duration\":0.1748330000000351,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Real-time Subscriptions Tests\"],\"fullName\":\"Supabase Integration Tests Real-time Subscriptions Tests should handle subscription errors gracefully\",\"status\":\"passed\",\"title\":\"should handle subscription errors gracefully\",\"duration\":0.45066700000006676,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Admin Operations Tests\"],\"fullName\":\"Supabase Integration Tests Admin Operations Tests should perform admin operations with service role\",\"status\":\"passed\",\"title\":\"should perform admin operations with service role\",\"duration\":0.2894169999999576,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Admin Operations Tests\"],\"fullName\":\"Supabase Integration Tests Admin Operations Tests should handle admin privilege escalation\",\"status\":\"passed\",\"title\":\"should handle admin privilege escalation\",\"duration\":0.14724999999998545,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Database Triggers Tests\"],\"fullName\":\"Supabase Integration Tests Database Triggers Tests should automatically update updated_at timestamp on profile changes\",\"status\":\"passed\",\"title\":\"should automatically update updated_at timestamp on profile changes\",\"duration\":0.27366700000015953,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Database Triggers Tests\"],\"fullName\":\"Supabase Integration Tests Database Triggers Tests should automatically create profile on user registration\",\"status\":\"passed\",\"title\":\"should automatically create profile on user registration\",\"duration\":0.13887500000009823,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Data Validation Tests\"],\"fullName\":\"Supabase Integration Tests Data Validation Tests should validate email format in profiles\",\"status\":\"passed\",\"title\":\"should validate email format in profiles\",\"duration\":0.10054199999990487,\"failureMessages\":[],\"meta\":{}},{\"ancestorTitles\":[\"Supabase Integration Tests\",\"Data Validation Tests\"],\"fullName\":\"Supabase Integration Tests Data Validation Tests should enforce required fields in business_ideas\",\"status\":\"passed\",\"title\":\"should enforce required fields in business_ideas\",\"duration\":0.10129100000017388,\"failureMessages\":[],\"meta\":{}}],\"startTime\":1758122003197,\"endTime\":1758122003205.1013,\"status\":\"passed\",\"message\":\"\",\"name\":\"/Users/homegrownentllc/Desktop/biz-plan-navigator-d8f6a579/tests/integration/supabase.test.js\"}]}\n",
+      "error": null
+    }
+  ],
+  "errors": [],
+  "warnings": [
+    "Missing environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, VITE_R2_ACCOUNT_ID"
+  ],
+  "performance": {
+    "slowestSuites": [
+      {
+        "name": "Supabase Integration Tests",
+        "duration": 2957,
+        "type": "integration"
+      }
+    ],
+    "memoryUsage": {
+      "rss": 32112640,
+      "heapTotal": 4784128,
+      "heapUsed": 4471552,
+      "external": 1801114,
+      "arrayBuffers": 44284
+    },
+    "resourceLeaks": []
+  },
+  "metadata": {
+    "timestamp": "2025-09-17T15:13:23.359Z",
+    "nodeVersion": "v20.19.5",
+    "platform": "darwin",
+    "environment": "test",
+    "runner": "custom-test-runner"
+  }
+}

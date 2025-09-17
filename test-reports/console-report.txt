@@ -1,0 +1,25 @@
+
+INTEGRATION TEST SUMMARY REPORT
+Generated: 2025-09-17T15:13:23.392Z
+Duration: 3s
+
+TEST SUITES: 1/1 passed
+INDIVIDUAL TESTS: 25/25 passed
+ERRORS: 0
+WARNINGS: 1
+
+SUITE BREAKDOWN:
+  ✅ Supabase Integration Tests (2957ms) - 25/25 tests passed
+
+PERFORMANCE:
+  Slowest Suites:
+    - Supabase Integration Tests: 2957ms
+
+  Memory Usage: 4MB
+
+
+
+
+WARNINGS:
+  - Missing environment variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, VITE_R2_ACCOUNT_ID
+
