@@ -13,8 +13,8 @@ export default function TestPage() {
     // Test Supabase connection
     const testSupabase = async () => {
       try {
-        const supabaseUrl = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseKey = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
         console.log('Supabase URL:', supabaseUrl);
         console.log('Supabase Key exists:', !!supabaseKey);
@@ -76,8 +76,8 @@ export default function TestPage() {
           <div>
             <strong>Environment Variables:</strong>
             <ul className="list-disc ml-6 mt-2 space-y-1">
-              <li>NEXT_PUBLIC_SUPABASE_URL: {import.meta.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</li>
-              <li>NEXT_PUBLIC_SUPABASE_ANON_KEY: {import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</li>
+              <li>VITE_SUPABASE_URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</li>
+              <li>VITE_SUPABASE_ANON_KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</li>
               <li>VITE_OPENAI_API_KEY: {import.meta.env.VITE_OPENAI_API_KEY ? '✅ Set' : '❌ Missing'}</li>
             </ul>
           </div>

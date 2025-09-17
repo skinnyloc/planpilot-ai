@@ -36,8 +36,8 @@ export default function DebugPage() {
             <h2 className="text-xl font-semibold mb-4">Environment Variables</h2>
             <div className="space-y-2">
               <div>Clerk Key: {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? '✅ Set' : '❌ Missing'}</div>
-              <div>Supabase URL: {import.meta.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</div>
-              <div>Supabase Key: {import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</div>
+              <div>Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}</div>
+              <div>Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}</div>
               <div>OpenAI Key: {import.meta.env.VITE_OPENAI_API_KEY ? '✅ Set' : '❌ Missing'}</div>
             </div>
           </div>
