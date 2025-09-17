@@ -1,192 +1,310 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+/**
+ * Client-side Business Plan Service
+ * Uses API routes for secure operations
+ */
+
 import { supabase } from '../supabase.js';
 
-// Configure S3 client for Cloudflare R2
-const r2Client = new S3Client({
-  region: 'auto',
-  endpoint: import.meta.env.VITE_R2_ENDPOINT || process.env.R2_ENDPOINT,
-  credentials: {
-    accessKeyId: import.meta.env.VITE_R2_ACCESS_KEY_ID || process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.VITE_R2_SECRET_ACCESS_KEY || process.env.R2_SECRET_ACCESS_KEY,
-  },
-});
-
-const BUCKET_NAME = import.meta.env.VITE_R2_BUCKET_NAME || process.env.R2_BUCKET_NAME || 'planpolitai';
-
 /**
- * Upload business plan to R2 storage and save metadata to Supabase
+ * Generate business plan content using AI API
  */
-export async function uploadBusinessPlan(file, onProgress) {
+export async function generateBusinessPlan(businessIdea, userId) {
   try {
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = file.name.split('.').pop();
-    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const fileName = `business-plans/${timestamp}_${sanitizedName}`;
-
-    // Upload to R2
-    const uploadCommand = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: fileName,
-      Body: file,
-      ContentType: file.type,
-      Metadata: {
-        originalName: file.name,
-        uploadedAt: new Date().toISOString(),
-      },
-    });
-
-    if (onProgress) onProgress(50);
-
-    await r2Client.send(uploadCommand);
-
-    if (onProgress) onProgress(75);
-
-    // Generate signed URL for access
-    const getCommand = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: fileName,
-    });
-
-    const signedUrl = await getSignedUrl(r2Client, getCommand, { expiresIn: 3600 * 24 * 7 }); // 7 days
-
-    // Save metadata to Supabase
-    const { data: documentData, error } = await supabase
-      .from('documents')
-      .insert({
-        original_filename: file.name,
-        filename: fileName,
-        file_path: fileName,
-        file_size: file.size,
-        mime_type: file.type,
-        document_type: 'business_plan',
-        description: 'Uploaded business plan for grant matching',
-        tags: ['business-plan', 'grant-matching'],
-        storage_bucket: BUCKET_NAME,
-        storage_path: fileName,
-        is_public: false,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Failed to save document metadata:', error);
-      throw new Error('Failed to save document metadata');
+    if (!businessIdea || !userId) {
+      throw new Error('Business idea and user ID are required');
     }
 
-    if (onProgress) onProgress(100);
-
-    return {
-      id: documentData.id,
-      url: signedUrl,
-      fileName: fileName,
-      originalName: file.name,
-      size: file.size,
-      type: file.type,
-    };
-
-  } catch (error) {
-    console.error('Upload failed:', error);
-    throw new Error(`Upload failed: ${error.message}`);
-  }
-}
-
-/**
- * Extract business plan data using OpenAI
- */
-export async function extractBusinessPlanData(fileUrl) {
-  try {
-    const response = await fetch('/api/analyze-business-plan', {
+    // Call the AI API route
+    const response = await fetch('/api/ai/generate', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ fileUrl }),
+      body: JSON.stringify({
+        prompt: buildBusinessPlanPrompt(businessIdea),
+        type: 'business-plan',
+        maxTokens: 3500,
+        temperature: 0.7,
+        userId
+      }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to analyze business plan');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to generate business plan');
     }
 
-    const data = await response.json();
-    return data.extractedData;
+    const result = await response.json();
+    return result;
 
   } catch (error) {
-    console.error('Business plan analysis failed:', error);
-    // Return fallback data instead of failing completely
-    return {
-      businessName: 'Unable to extract',
-      industry: 'Unable to extract',
-      fundingAmount: 'Unable to extract',
-      location: 'Unable to extract',
-      businessStage: 'Unable to extract',
-      targetMarket: 'Unable to extract',
-      error: error.message,
-    };
+    console.error('Error generating business plan:', error);
+    throw new Error('Failed to generate business plan: ' + error.message);
   }
 }
 
 /**
- * Get user's uploaded business plans
+ * Save business plan to database and storage
  */
-export async function getUserBusinessPlans() {
+export async function saveBusinessPlan(userId, businessPlan, metadata = {}) {
   try {
+    // Save to database
     const { data, error } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('document_type', 'business_plan')
-      .order('created_at', { ascending: false });
+      .from('business_plans')
+      .insert([{
+        user_id: userId,
+        title: metadata.title || 'Untitled Business Plan',
+        content: businessPlan,
+        industry: metadata.industry,
+        target_market: metadata.targetMarket,
+        business_idea: metadata.businessIdea,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }])
+      .select()
+      .single();
 
-    if (error) {
-      throw new Error(`Failed to fetch business plans: ${error.message}`);
+    if (error) throw error;
+
+    // Also save as document for document management
+    const documentKey = `business-plans/${userId}/${data.id}.json`;
+
+    // Upload to storage via API
+    const storageResponse = await fetch('/api/storage/signed-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'upload',
+        key: documentKey,
+        contentType: 'application/json'
+      }),
+    });
+
+    if (storageResponse.ok) {
+      const { signedUrl } = await storageResponse.json();
+
+      const planData = {
+        ...data,
+        content: businessPlan,
+        metadata
+      };
+
+      await fetch(signedUrl, {
+        method: 'PUT',
+        body: JSON.stringify(planData, null, 2),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
 
-    return data || [];
+    return data;
 
   } catch (error) {
-    console.error('Failed to get business plans:', error);
-    throw error;
+    console.error('Error saving business plan:', error);
+    throw new Error('Failed to save business plan');
+  }
+}
+
+/**
+ * Get user's business plans
+ */
+export async function getUserBusinessPlans(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('business_plans')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching business plans:', error);
+    throw new Error('Failed to fetch business plans');
+  }
+}
+
+/**
+ * Get business plan by ID
+ */
+export async function getBusinessPlan(planId, userId) {
+  try {
+    const { data, error } = await supabase
+      .from('business_plans')
+      .select('*')
+      .eq('id', planId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching business plan:', error);
+    throw new Error('Failed to fetch business plan');
+  }
+}
+
+/**
+ * Update business plan
+ */
+export async function updateBusinessPlan(planId, updates, userId) {
+  try {
+    const { data, error } = await supabase
+      .from('business_plans')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', planId)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating business plan:', error);
+    throw new Error('Failed to update business plan');
   }
 }
 
 /**
  * Delete business plan
  */
-export async function deleteBusinessPlan(documentId) {
+export async function deleteBusinessPlan(planId, userId) {
   try {
-    const { error } = await supabase
-      .from('documents')
-      .delete()
-      .eq('id', documentId);
+    // Delete from storage first
+    const documentKey = `business-plans/${userId}/${planId}.json`;
 
-    if (error) {
-      throw new Error(`Failed to delete business plan: ${error.message}`);
+    const deleteResponse = await fetch('/api/storage/signed-url', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'delete',
+        key: documentKey
+      }),
+    });
+
+    if (deleteResponse.ok) {
+      const { signedUrl } = await deleteResponse.json();
+      await fetch(signedUrl, { method: 'DELETE' });
     }
 
+    // Delete from database
+    const { error } = await supabase
+      .from('business_plans')
+      .delete()
+      .eq('id', planId)
+      .eq('user_id', userId);
+
+    if (error) throw error;
     return true;
 
   } catch (error) {
-    console.error('Failed to delete business plan:', error);
-    throw error;
+    console.error('Error deleting business plan:', error);
+    throw new Error('Failed to delete business plan');
   }
 }
 
 /**
- * Get download URL for business plan
+ * Export business plan as PDF
  */
-export async function getBusinessPlanDownloadUrl(fileName) {
+export async function exportBusinessPlanAsPDF(planId, userId) {
   try {
-    const getCommand = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: fileName,
-    });
+    const plan = await getBusinessPlan(planId, userId);
+    if (!plan) {
+      throw new Error('Business plan not found');
+    }
 
-    const signedUrl = await getSignedUrl(r2Client, getCommand, { expiresIn: 3600 }); // 1 hour
-    return signedUrl;
+    // This would typically use a PDF generation library
+    // For now, we'll create a downloadable text file
+    const content = `
+BUSINESS PLAN: ${plan.title}
+Generated: ${new Date(plan.created_at).toLocaleDateString()}
 
+${plan.content}
+    `.trim();
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${plan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    return true;
   } catch (error) {
-    console.error('Failed to generate download URL:', error);
-    throw new Error(`Failed to generate download URL: ${error.message}`);
+    console.error('Error exporting business plan:', error);
+    throw new Error('Failed to export business plan');
   }
+}
+
+/**
+ * Build business plan prompt
+ */
+function buildBusinessPlanPrompt(businessIdea) {
+  return `Create a comprehensive business plan for the following business:
+
+Business Idea: ${businessIdea}
+
+Please structure the business plan with the following sections:
+
+1. EXECUTIVE SUMMARY
+   - Business concept overview
+   - Mission statement
+   - Key success factors
+   - Financial summary
+
+2. COMPANY DESCRIPTION
+   - Company history and ownership
+   - Products/services offered
+   - Location and facilities
+   - Competitive advantages
+
+3. MARKET ANALYSIS
+   - Industry overview
+   - Target market analysis
+   - Market size and trends
+   - Competitive analysis
+
+4. ORGANIZATION & MANAGEMENT
+   - Organizational structure
+   - Management team profiles
+   - Personnel plan
+   - Advisory board
+
+5. MARKETING & SALES STRATEGY
+   - Marketing strategy
+   - Sales strategy
+   - Pricing strategy
+   - Distribution channels
+
+6. OPERATIONS PLAN
+   - Product/service development
+   - Production process
+   - Quality control
+   - Inventory management
+
+7. FINANCIAL PROJECTIONS
+   - Revenue projections (3 years)
+   - Expense forecasts
+   - Break-even analysis
+   - Funding requirements
+
+8. RISK ANALYSIS
+   - Market risks
+   - Operational risks
+   - Financial risks
+   - Mitigation strategies
+
+Provide detailed, professional content for each section with specific insights and actionable recommendations. Use data-driven insights where possible and maintain a professional business tone throughout.`;
 }

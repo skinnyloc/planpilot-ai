@@ -8,10 +8,10 @@ import crypto from 'crypto';
 const client = new Client({
   clientCredentialsAuthCredentials: {
     oAuthClientId: process.env.PAYPAL_CLIENT_ID,
-    oAuthClientSecret: process.env.PAYPAL_SECRET,
+    oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET,
   },
   timeout: 0,
-  environment: 'sandbox', // Change to 'live' for production
+  environment: process.env.PAYPAL_MODE || 'sandbox', // Defaults to sandbox
   logging: {
     logLevel: LogLevel.INFO,
     logRequest: { logBody: true },

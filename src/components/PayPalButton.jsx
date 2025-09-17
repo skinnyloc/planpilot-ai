@@ -13,8 +13,8 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
   const { user } = useUser();
 
   // Check if PayPal is configured
-  const isPayPalConfigured = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID &&
-    process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID !== 'YOUR_PAYPAL_CLIENT_ID_HERE';
+  const isPayPalConfigured = import.meta.env.VITE_PAYPAL_CLIENT_ID &&
+    import.meta.env.VITE_PAYPAL_CLIENT_ID !== 'YOUR_PAYPAL_CLIENT_ID_HERE';
 
   useEffect(() => {
     if (!user) return;
@@ -28,7 +28,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
         }
 
         const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&currency=USD&disable-funding=credit,card`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=USD&disable-funding=credit,card`;
         script.onload = () => resolve(window.paypal);
         script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
         document.body.appendChild(script);

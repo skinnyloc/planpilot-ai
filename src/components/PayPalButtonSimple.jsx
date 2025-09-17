@@ -7,8 +7,8 @@ export default function PayPalButtonSimple({ planId, billingCycle = 'monthly', o
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Check if PayPal is configured
-  const isPayPalConfigured = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID &&
-    process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID !== 'YOUR_PAYPAL_CLIENT_ID_HERE';
+  const isPayPalConfigured = import.meta.env.VITE_PAYPAL_CLIENT_ID &&
+    import.meta.env.VITE_PAYPAL_CLIENT_ID !== 'YOUR_PAYPAL_CLIENT_ID_HERE';
 
   // Demo mode handler
   const handleDemoPayment = () => {

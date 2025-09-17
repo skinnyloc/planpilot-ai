@@ -12,7 +12,7 @@ import BusinessPlansPage from "../app/business-plans/page.jsx"
 import GrantsPage from "../app/grants/page.jsx"
 import GrantProposalsPage from "../app/grant-proposals/page.jsx"
 import CreditGuidePage from "../app/credit-guide/page.jsx"
-import DocumentsPage from "../app/documents/page.jsx"
+// import DocumentsPage from "../app/documents/page.jsx" // Temporarily disabled
 import PricingPage from "../app/pricing/page.jsx"
 import ProfilePage from "../app/profile/page.jsx"
 import TestPage from "../app/test/page.jsx"
@@ -111,7 +111,7 @@ function App() {
           } />
           <Route path="/documents" element={
             <ProtectedRoute>
-              <DocumentsPage />
+              <div className="p-8"><div className="text-center text-gray-500">Documents feature temporarily disabled</div></div>
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
