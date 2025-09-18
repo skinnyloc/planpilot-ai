@@ -76,10 +76,10 @@ export default function DemoControls() {
 
         <button
           onClick={simulatePaidUser}
-          className="w-full flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition-colors text-sm"
+          className="w-full flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
         >
           <CreditCard className="h-4 w-4" />
-          Simulate Paid User
+          <span className="text-white">Simulate Paid User</span>
         </button>
 
         <button
