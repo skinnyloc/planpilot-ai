@@ -3,9 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { POST as checkoutHandler } from './api/checkout.js';
 import { POST as generateProposalHandler } from './api/generate-proposal.js';
+import { GET as documentsGetHandler, POST as documentsPostHandler } from './api/documents.js';
+import { POST as r2SignUploadHandler } from './api/r2-sign-upload.js';
+import { POST as analyzePdfHandler } from './api/analyze-pdf.js';
 
 // Load environment variables
-dotenv.config({ path: '../.env.local' });
+dotenv.config({ path: '.env.local' });
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
@@ -32,6 +35,45 @@ app.post('/api/generate-proposal', async (req, res) => {
     await generateProposalHandler(req, res);
   } catch (error) {
     console.error('Generate proposal route error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Documents API routes
+app.get('/api/documents', async (req, res) => {
+  try {
+    await documentsGetHandler(req, res);
+  } catch (error) {
+    console.error('Documents GET route error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/documents', async (req, res) => {
+  try {
+    await documentsPostHandler(req, res);
+  } catch (error) {
+    console.error('Documents POST route error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// R2 upload signing
+app.post('/api/r2/sign-upload', async (req, res) => {
+  try {
+    await r2SignUploadHandler(req, res);
+  } catch (error) {
+    console.error('R2 sign upload route error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PDF analysis
+app.post('/api/proposals/analyze-pdf', async (req, res) => {
+  try {
+    await analyzePdfHandler(req, res);
+  } catch (error) {
+    console.error('PDF analysis route error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

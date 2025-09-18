@@ -1,125 +1,120 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { getUserDocuments, deleteDocument } from '@/lib/services/documentStorage';
+import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { auth } from "@clerk/nextjs";
 
-/**
- * Documents List API Route
- *
- * GET: List user's documents with filtering and pagination
- * DELETE: Delete multiple documents
- */
+const supabase = createClient(
+  process.env.VITE_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 export async function GET(request) {
   try {
     // Authenticate user
     const { userId } = auth();
-    if (!userId) {
+    if (\!userId) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    // Parse query parameters
     const { searchParams } = new URL(request.url);
-    const options = {
-      page: parseInt(searchParams.get('page')) || 1,
-      limit: Math.min(parseInt(searchParams.get('limit')) || 20, 100),
-      search: searchParams.get('search') || '',
-      type: searchParams.get('type') || '',
-      sortBy: searchParams.get('sortBy') || 'created_at',
-      sortOrder: searchParams.get('sortOrder') || 'desc'
-    };
+    const type = searchParams.get("type");
 
-    // Get documents using service
-    const result = await getUserDocuments(userId, options);
+    // Build query
+    let query = supabase
+      .from("documents")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-    if (!result.success) {
-      console.error('Get documents error:', result.error);
+    // Filter by type if specified
+    if (type && type \!== "all") {
+      query = query.eq("document_type", type);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Supabase error:", error);
       return NextResponse.json(
-        { success: false, error: result.error || 'Failed to fetch documents' },
+        { error: "Failed to fetch documents" },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      documents: result.documents,
-      pagination: {
-        page: result.page,
-        limit: result.limit,
-        total: result.total,
-        totalPages: result.totalPages,
-        hasNext: result.page < result.totalPages,
-        hasPrev: result.page > 1
-      }
+      documents: data || []
     });
 
   } catch (error) {
-    console.error('Documents API error:', error);
+    console.error("Documents API error:", error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      {
+        error: "Failed to fetch documents",
+        details: process.env.NODE_ENV === "development" ? error.message : undefined
+      },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(request) {
+export async function POST(request) {
   try {
     // Authenticate user
     const { userId } = auth();
-    if (!userId) {
+    if (\!userId) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    // Parse request body
-    const { documentIds } = await request.json();
+    const { title, document_type, storage_key, description, file_size, mime_type } = await request.json();
 
-    if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+    // Validate required fields
+    if (\!title || \!document_type || \!storage_key) {
       return NextResponse.json(
-        { success: false, error: 'No document IDs provided' },
+        { error: "Title, document_type, and storage_key are required" },
         { status: 400 }
       );
     }
 
-    // Delete documents using service
-    let deletedCount = 0;
-    const errors = [];
+    const { data, error } = await supabase
+      .from("documents")
+      .insert({
+        user_id: userId,
+        title,
+        document_type,
+        storage_key,
+        description,
+        file_size,
+        mime_type: mime_type || "application/pdf"
+      })
+      .select()
+      .single();
 
-    for (const documentId of documentIds) {
-      const result = await deleteDocument(documentId, userId);
-      if (result.success) {
-        deletedCount++;
-      } else {
-        errors.push(`Failed to delete document ${documentId}: ${result.error}`);
-      }
-    }
-
-    if (deletedCount === 0) {
+    if (error) {
+      console.error("Supabase insert error:", error);
       return NextResponse.json(
-        { success: false, error: 'No documents were deleted', errors },
+        { error: "Failed to create document record" },
         { status: 500 }
       );
     }
 
-    const response = {
+    return NextResponse.json({
       success: true,
-      message: `${deletedCount} document(s) deleted successfully`,
-      deletedCount
-    };
-
-    if (errors.length > 0) {
-      response.warnings = errors;
-    }
-
-    return NextResponse.json(response);
+      document: data
+    });
 
   } catch (error) {
-    console.error('Delete documents API error:', error);
+    console.error("Documents POST API error:", error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
+      {
+        error: "Failed to create document",
+        details: process.env.NODE_ENV === "development" ? error.message : undefined
+      },
       { status: 500 }
     );
   }
