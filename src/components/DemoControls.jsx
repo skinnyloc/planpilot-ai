@@ -84,7 +84,7 @@ export default function DemoControls() {
 
         <button
           onClick={simulateProUser}
-          className="w-full flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm"
+          className="w-full flex items-center gap-2 bg-gray-100 text-gray-800 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm"
         >
           <Crown className="h-4 w-4" />
           Simulate Pro User
