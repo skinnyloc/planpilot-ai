@@ -62,8 +62,8 @@ export default function ProfilePage() {
       const profile = profileResult.profile;
       const combinedData = {
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
+        firstName: profile?.first_name || userData.firstName || '',
+        lastName: profile?.last_name || userData.lastName || '',
         username: profile?.username || ''
       };
 
@@ -126,11 +126,7 @@ export default function ProfilePage() {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      setMessage({ type: 'error', text: 'Please fix the errors below' });
-      return;
-    }
-
+    // Remove validation requirement - allow saving individual fields
     setIsSaving(true);
     setMessage({ type: '', text: '' });
 
