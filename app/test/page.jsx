@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
+import { supabase } from '../../src/lib/supabase.js';
 
 export default function TestPage() {
   const [status, setStatus] = useState('Loading...');
@@ -24,8 +26,7 @@ export default function TestPage() {
           return;
         }
 
-        // Try to import supabase
-        const { supabase } = await import('../../src/lib/supabase.js');
+        // Test supabase connection
         const { data, error } = await supabase.from('profiles').select('count').limit(1);
 
         if (error) {
@@ -42,9 +43,12 @@ export default function TestPage() {
     // Test user hook
     const testUser = async () => {
       try {
-        // For now, just check if Clerk's useUser is available
-        const { useUser } = await import('@clerk/clerk-react');
-        setUserStatus('✅ Clerk user hook available');
+        // Check if Clerk's useUser is available
+        if (typeof useUser === 'function') {
+          setUserStatus('✅ Clerk user hook available');
+        } else {
+          setUserStatus('❌ Clerk user hook not available');
+        }
       } catch (error) {
         setUserStatus(`❌ User hook error: ${error.message}`);
         console.error('User hook test failed:', error);
