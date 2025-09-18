@@ -361,7 +361,11 @@ export default function GrantProposalsPage() {
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center gap-2 text-sm text-foreground">
                         <Check className="h-4 w-4 text-green-600" />
-                        {uploadedFile.file.name}
+                        <span className="truncate" title={uploadedFile.file.name}>
+                          {uploadedFile.file.name.length > 30
+                            ? `${uploadedFile.file.name.substring(0, 27)}...`
+                            : uploadedFile.file.name}
+                        </span>
                       </div>
                       {pdfAnalysis && (
                         <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 rounded p-2">
