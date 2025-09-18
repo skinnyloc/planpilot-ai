@@ -67,6 +67,10 @@ export default function ProfilePage() {
         username: profile?.username || ''
       };
 
+      console.log('Loading profile - userData:', userData);
+      console.log('Loading profile - profile from DB:', profile);
+      console.log('Loading profile - combinedData:', combinedData);
+
       setFormData(combinedData);
       setOriginalData(combinedData);
       setProfileData(profile);
@@ -131,14 +135,18 @@ export default function ProfilePage() {
     setMessage({ type: '', text: '' });
 
     try {
-      // Update Clerk data first
-      const clerkUpdateData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName
-      };
-      console.log('Sending to Clerk:', clerkUpdateData);
-      console.log('FormData keys:', Object.keys(formData));
-      await user.update(clerkUpdateData);
+      // Update Clerk data first - use only explicitly safe field names
+      const safeFirstName = String(formData.firstName || '');
+      const safeLastName = String(formData.lastName || '');
+
+      console.log('Raw formData:', formData);
+      console.log('Safe firstName:', safeFirstName);
+      console.log('Safe lastName:', safeLastName);
+
+      await user.update({
+        firstName: safeFirstName,
+        lastName: safeLastName
+      });
 
       // Update or create Supabase profile using service
       const saveResult = await saveUserProfile(user.id, {
