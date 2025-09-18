@@ -70,10 +70,7 @@ export async function saveUserProfile(userId, profileData) {
     // Use upsert to create or update profile
     const { data: profile, error } = await supabase
       .from('profiles')
-      .upsert(profileRecord, {
-        onConflict: 'id',
-        ignoreDuplicates: false
-      })
+      .upsert(profileRecord)
       .select()
       .single();
 
