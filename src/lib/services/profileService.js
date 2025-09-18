@@ -56,6 +56,7 @@ export async function saveUserProfile(userId, profileData) {
     // Prepare profile data for upsert
     const profileRecord = {
       id: userId,
+      user_email: profileData.email || null,  // Add user_email field
       email: profileData.email || null,
       username: profileData.username || null,
       first_name: profileData.firstName || null,
