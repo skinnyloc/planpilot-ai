@@ -48,7 +48,7 @@ export default function GrantProposalsPage() {
   const loadSavedDocuments = async () => {
     try {
       setLoadingDocuments(true);
-      const response = await fetch('http://localhost:3001/api/documents?type=business_plan', {
+      const response = await fetch('/api/documents?type=business_plan', {
         headers: {
           'x-user-id': user?.id || 'demo-user'
         }
@@ -84,7 +84,7 @@ export default function GrantProposalsPage() {
 
     try {
       // Get signed upload URL
-      const signResponse = await fetch('http://localhost:3001/api/r2/sign-upload', {
+      const signResponse = await fetch('/api/r2/sign-upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ export default function GrantProposalsPage() {
       // Analyze the uploaded PDF
       setAnalyzingPdf(true);
       try {
-        const analysisResponse = await fetch('http://localhost:3001/api/proposals/analyze-pdf', {
+        const analysisResponse = await fetch('/api/proposals/analyze-pdf', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -230,7 +230,7 @@ export default function GrantProposalsPage() {
     setGenerationError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/generate-proposal', {
+      const response = await fetch('/api/generate-proposal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

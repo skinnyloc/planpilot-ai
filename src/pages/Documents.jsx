@@ -27,7 +27,7 @@ export default function Documents() {
     const fetchDocuments = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:3001/api/documents?type=${filter}`, {
+            const response = await fetch(`/api/documents?type=${filter}`, {
                 headers: {
                     'x-user-id': user?.id || 'demo-user'
                 }
@@ -93,7 +93,7 @@ export default function Documents() {
     const handleDelete = async (doc) => {
         if (deleteConfirm === doc.id) {
             try {
-                const response = await fetch(`http://localhost:3001/api/documents/${doc.id}`, {
+                const response = await fetch(`/api/documents/${doc.id}`, {
                     method: 'DELETE',
                     headers: {
                         'x-user-id': user?.id || 'demo-user'
