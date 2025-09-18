@@ -111,11 +111,6 @@ function App() {
               <CreditGuidePage />
             </ProtectedRoute>
           } />
-          <Route path="/documents" element={
-            <ProtectedRoute>
-              <div className="p-8"><div className="text-center text-gray-500">Documents feature temporarily disabled</div></div>
-            </ProtectedRoute>
-          } />
           <Route path="/profile" element={
             <ProtectedRoute>
               <ProfilePage />

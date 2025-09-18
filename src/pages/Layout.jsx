@@ -1,5 +1,5 @@
 import React from "react";
-import { Building2, FileText, DollarSign, CreditCard, FolderOpen, LayoutDashboard, Menu, X, ShieldCheck, Tag, User } from "lucide-react";
+import { Building2, FileText, DollarSign, CreditCard, LayoutDashboard, Menu, X, ShieldCheck, Tag, User } from "lucide-react";
 
 export default function Layout() {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -11,7 +11,6 @@ export default function Layout() {
         { title: "Grants", icon: DollarSign },
         { title: "Grant Proposals", icon: ShieldCheck },
         { title: "Credit Guide", icon: CreditCard },
-        { title: "Documents", icon: FolderOpen },
         { title: "Pricing", icon: Tag },
         { title: "Profile", icon: User },
     ];
