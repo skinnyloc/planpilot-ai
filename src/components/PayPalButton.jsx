@@ -28,7 +28,8 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
         }
 
         const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=USD&disable-funding=credit,card`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=Ab6MKwY3DX3P0K441jv6tZXbhHmXbtnK3K4dQLYldKjXMjquLusIsvTui17G_l03gJsCkgaY0Wa-mX7f&vault=true&intent=subscription`;
+        script.setAttribute('data-sdk-integration-source', 'button-factory');
         script.onload = () => resolve(window.paypal);
         script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
         document.body.appendChild(script);
@@ -39,8 +40,8 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
       try {
         setError(null);
 
-        // Check if PayPal is configured
-        if (!isPayPalConfigured) {
+        // Check if PayPal is configured (always true now with hardcoded client ID)
+        if (!true) {
           setDemoMode(true);
           setIsLoading(false);
           return;
@@ -52,87 +53,46 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
           paypalButtonRef.current.innerHTML = '';
         }
 
+        // Determine plan ID based on billing cycle
+        const planIdMap = {
+          'monthly': 'P-021407488D8484329NDEOG2A',  // $19.99 plan
+          'yearly': 'P-5HR698674T6427033NDEOFSY'    // $199.99 plan
+        };
+
+        const subscriptionPlanId = planIdMap[billingCycle];
+
         const buttons = paypal.Buttons({
           style: {
-            layout: 'horizontal',
-            color: 'blue',
             shape: 'rect',
-            label: 'pay',
-            height: 50,
-            tagline: false
+            color: 'gold',
+            layout: 'vertical',
+            label: 'subscribe'
           },
 
-          createOrder: async (data, actions) => {
-            try {
-              setIsProcessing(true);
+          createSubscription: function(data, actions) {
+            return actions.subscription.create({
+              plan_id: subscriptionPlanId
+            });
+          },
 
-              const response = await fetch('http://localhost:3001/api/checkout', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'x-user-id': user.id // Pass Clerk user ID
-                },
-                body: JSON.stringify({
-                  planId,
-                  billingCycle
-                }),
+          onApprove: function(data, actions) {
+            console.log('Subscription successful:', data);
+            setIsProcessing(false);
+
+            // Call success callback
+            if (onSuccess) {
+              onSuccess({
+                subscriptionID: data.subscriptionID,
+                details: data
               });
-
-              if (!response.ok) {
-                let errorData;
-                try {
-                  const text = await response.text();
-                  errorData = text ? JSON.parse(text) : { error: 'No response data' };
-                } catch (e) {
-                  errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
-                }
-                throw new Error(errorData.error || 'Failed to create order');
-              }
-
-              const orderData = await response.json();
-              return orderData.orderId;
-            } catch (error) {
-              console.error('Order creation error:', error);
-              setError(`Failed to create payment: ${error.message}`);
-              setIsProcessing(false);
-              throw error;
             }
-          },
 
-          onApprove: async (data, actions) => {
-            try {
-              setIsProcessing(true);
-
-              // Capture the payment
-              const details = await actions.order.capture();
-
-              console.log('Payment successful:', details);
-
-              // Call success callback
-              if (onSuccess) {
-                onSuccess({
-                  orderID: data.orderID,
-                  paymentID: details.id,
-                  details
-                });
-              }
-
-              // Redirect to success page
-              window.location.href = `/payment/success?token=${data.orderID}&PayerID=${details.payer.payer_id}`;
-
-            } catch (error) {
-              console.error('Payment approval error:', error);
-              setError(`Payment failed: ${error.message}`);
-              setIsProcessing(false);
-
-              if (onError) {
-                onError(error);
-              }
-            }
+            // Show success alert as per your original code
+            alert(data.subscriptionID);
           },
 
           onCancel: (data) => {
-            console.log('Payment cancelled:', data);
+            console.log('Subscription cancelled:', data);
             setIsProcessing(false);
 
             if (onCancel) {
@@ -141,8 +101,8 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
           },
 
           onError: (error) => {
-            console.error('PayPal button error:', error);
-            setError('Payment system error. Please try again.');
+            console.error('PayPal subscription error:', error);
+            setError('Subscription system error. Please try again.');
             setIsProcessing(false);
 
             if (onError) {
@@ -166,7 +126,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
     };
 
     initializePayPal();
-  }, [user, planId, billingCycle, onSuccess, onError, onCancel, isPayPalConfigured]);
+  }, [user, planId, billingCycle, onSuccess, onError, onCancel]);
 
   // Demo mode handler
   const handleDemoPayment = () => {
