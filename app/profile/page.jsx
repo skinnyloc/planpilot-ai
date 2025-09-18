@@ -132,10 +132,13 @@ export default function ProfilePage() {
 
     try {
       // Update Clerk data first
-      await user.update({
+      const clerkUpdateData = {
         firstName: formData.firstName,
         lastName: formData.lastName
-      });
+      };
+      console.log('Sending to Clerk:', clerkUpdateData);
+      console.log('FormData keys:', Object.keys(formData));
+      await user.update(clerkUpdateData);
 
       // Update or create Supabase profile using service
       const saveResult = await saveUserProfile(user.id, {
