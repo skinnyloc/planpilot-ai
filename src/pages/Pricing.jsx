@@ -1,59 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 
 export default function PricingPage() {
-    useEffect(() => {
-        // Load PayPal SDK script if not already loaded
-        if (!window.paypal && !document.querySelector('script[src*="paypal.com/sdk"]')) {
-            const script = document.createElement('script');
-            script.src = 'https://www.paypal.com/sdk/js?client-id=Ab6MKwY3DX3P0K441jv6tZXbhHmXbtnK3K4dQLYldKjXMjquLusIsvTui17G_l03gJsCkgaY0Wa-mX7f&vault=true&intent=subscription';
-            script.setAttribute('data-sdk-integration-source', 'button-factory');
-            document.body.appendChild(script);
-
-            script.onload = () => {
-                // Initialize monthly plan button
-                if (window.paypal && document.getElementById('paypal-button-container-P-021407488D8484329NDEOG2A')) {
-                    window.paypal.Buttons({
-                        style: {
-                            shape: 'rect',
-                            color: 'gold',
-                            layout: 'vertical',
-                            label: 'subscribe'
-                        },
-                        createSubscription: function(data, actions) {
-                            return actions.subscription.create({
-                                plan_id: 'P-021407488D8484329NDEOG2A'
-                            });
-                        },
-                        onApprove: function(data, actions) {
-                            alert('Subscription ID: ' + data.subscriptionID);
-                        }
-                    }).render('#paypal-button-container-P-021407488D8484329NDEOG2A');
-                }
-
-                // Initialize yearly plan button
-                if (window.paypal && document.getElementById('paypal-button-container-P-5HR698674T6427033NDEOFSY')) {
-                    window.paypal.Buttons({
-                        style: {
-                            shape: 'rect',
-                            color: 'gold',
-                            layout: 'vertical',
-                            label: 'subscribe'
-                        },
-                        createSubscription: function(data, actions) {
-                            return actions.subscription.create({
-                                plan_id: 'P-5HR698674T6427033NDEOFSY'
-                            });
-                        },
-                        onApprove: function(data, actions) {
-                            alert('Subscription ID: ' + data.subscriptionID);
-                        }
-                    }).render('#paypal-button-container-P-5HR698674T6427033NDEOFSY');
-                }
-            };
-        }
-    }, []);
 
     return (
         <div className="space-y-8">
@@ -96,7 +45,30 @@ export default function PricingPage() {
                         </ul>
 
                         {/* PayPal Monthly Subscription Button */}
-                        <div id="paypal-button-container-P-021407488D8484329NDEOG2A"></div>
+                        <div dangerouslySetInnerHTML={{
+                            __html: `
+                                <div id="paypal-button-container-P-021407488D8484329NDEOG2A"></div>
+                                <script src="https://www.paypal.com/sdk/js?client-id=Ab6MKwY3DX3P0K441jv6tZXbhHmXbtnK3K4dQLYldKjXMjquLusIsvTui17G_l03gJsCkgaY0Wa-mX7f&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+                                <script>
+                                  paypal.Buttons({
+                                      style: {
+                                          shape: 'rect',
+                                          color: 'gold',
+                                          layout: 'vertical',
+                                          label: 'subscribe'
+                                      },
+                                      createSubscription: function(data, actions) {
+                                          return actions.subscription.create({
+                                              'plan_id': 'P-021407488D8484329NDEOG2A'
+                                          });
+                                      },
+                                      onApprove: function(data, actions) {
+                                          alert(data.subscriptionID);
+                                      }
+                                  }).render('#paypal-button-container-P-021407488D8484329NDEOG2A');
+                                </script>
+                            `
+                        }} />
                     </CardContent>
                 </Card>
 
@@ -145,7 +117,30 @@ export default function PricingPage() {
                         </ul>
 
                         {/* PayPal Yearly Subscription Button */}
-                        <div id="paypal-button-container-P-5HR698674T6427033NDEOFSY"></div>
+                        <div dangerouslySetInnerHTML={{
+                            __html: `
+                                <div id="paypal-button-container-P-5HR698674T6427033NDEOFSY"></div>
+                                <script src="https://www.paypal.com/sdk/js?client-id=Ab6MKwY3DX3P0K441jv6tZXbhHmXbtnK3K4dQLYldKjXMjquLusIsvTui17G_l03gJsCkgaY0Wa-mX7f&vault=true&intent=subscription" data-sdk-integration-source="button-factory"></script>
+                                <script>
+                                  paypal.Buttons({
+                                      style: {
+                                          shape: 'rect',
+                                          color: 'gold',
+                                          layout: 'vertical',
+                                          label: 'subscribe'
+                                      },
+                                      createSubscription: function(data, actions) {
+                                          return actions.subscription.create({
+                                              'plan_id': 'P-5HR698674T6427033NDEOFSY'
+                                          });
+                                      },
+                                      onApprove: function(data, actions) {
+                                          alert(data.subscriptionID);
+                                      }
+                                  }).render('#paypal-button-container-P-5HR698674T6427033NDEOFSY');
+                                </script>
+                            `
+                        }} />
                     </CardContent>
                 </Card>
             </div>
