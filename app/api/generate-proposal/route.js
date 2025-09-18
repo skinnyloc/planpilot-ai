@@ -61,14 +61,19 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      content: proposalContent,
+      proposals: [{
+        mode: proposalType,
+        content: proposalContent,
+        grant: proposalType === 'grant_match' ? grant : null,
+        documentId: documentId
+      }],
       metadata: {
         proposalType,
         grant: proposalType === 'grant_match' ? grant : null,
         generatedAt: new Date().toISOString(),
         wordCount: proposalContent.split(' ').length
       },
-      documentId
+      documentIds: documentId ? [documentId] : []
     });
 
   } catch (error) {
