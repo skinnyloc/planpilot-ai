@@ -61,7 +61,9 @@ export default function ProfilePage() {
 
       const profile = profileResult.profile;
       const combinedData = {
-        ...userData,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
         username: profile?.username || ''
       };
 
