@@ -67,7 +67,12 @@ export default function GrantProposalsPage() {
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    if (!file) return;
+    console.log('File selected:', file);
+
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
     // Validate PDF file
     if (file.type !== 'application/pdf') {
@@ -79,6 +84,7 @@ export default function GrantProposalsPage() {
       return;
     }
 
+    console.log('Starting file upload for:', file.name);
     setIsUploading(true);
     setUploadProgress(0);
 

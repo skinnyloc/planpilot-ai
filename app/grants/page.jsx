@@ -20,7 +20,8 @@ export default function GrantsPage() {
         agency: 'National Science Foundation',
         awardRange: '$50,000 - $500,000',
         dueDate: '2024-09-30',
-        description: 'Funding for innovative research and development in high-tech fields'
+        description: 'Funding for innovative research and development in high-tech fields',
+        url: 'https://www.sbir.gov/'
       },
       {
         id: 2,
@@ -28,7 +29,8 @@ export default function GrantsPage() {
         agency: 'U.S. Department of Commerce',
         awardRange: '$25,000 - $150,000',
         dueDate: '2024-09-25',
-        description: 'Support for minority-owned business enterprises'
+        description: 'Support for minority-owned business enterprises',
+        url: 'https://www.mbda.gov/grants'
       },
       {
         id: 3,
@@ -36,7 +38,8 @@ export default function GrantsPage() {
         agency: 'USDA Rural Development',
         awardRange: '$10,000 - $75,000',
         dueDate: '2024-09-28',
-        description: 'Funding for businesses in rural communities'
+        description: 'Funding for businesses in rural communities',
+        url: 'https://www.rd.usda.gov/programs-services/business-programs'
       }
     ],
     'next-month': [
@@ -46,7 +49,8 @@ export default function GrantsPage() {
         agency: 'Department of Energy',
         awardRange: '$100,000 - $1,000,000',
         dueDate: '2024-10-15',
-        description: 'Support for renewable energy and clean technology businesses'
+        description: 'Support for renewable energy and clean technology businesses',
+        url: 'https://www.energy.gov/eere/funding/funding-opportunities'
       },
       {
         id: 5,
@@ -54,7 +58,8 @@ export default function GrantsPage() {
         agency: 'Small Business Administration',
         awardRange: '$15,000 - $100,000',
         dueDate: '2024-10-22',
-        description: 'Funding opportunities for women entrepreneurs'
+        description: 'Funding opportunities for women entrepreneurs',
+        url: 'https://www.sba.gov/funding-programs/grants'
       },
       {
         id: 6,
@@ -62,7 +67,8 @@ export default function GrantsPage() {
         agency: 'National Institute of Standards',
         awardRange: '$75,000 - $300,000',
         dueDate: '2024-10-31',
-        description: 'Support for bringing innovative technologies to market'
+        description: 'Support for bringing innovative technologies to market',
+        url: 'https://www.nist.gov/tpo/small-business-innovation-research-program'
       }
     ]
   };
@@ -212,7 +218,10 @@ export default function GrantsPage() {
                   </div>
                 </div>
               </div>
-              <button className="ml-4 inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+              <button
+                onClick={() => window.open(grant.url, '_blank')}
+                className="ml-4 inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+              >
                 <Eye className="h-4 w-4" />
                 View
               </button>
