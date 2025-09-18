@@ -89,42 +89,30 @@ export default function GrantProposalsPage() {
     setUploadProgress(0);
 
     try {
-      // Get signed upload URL
-      const signResponse = await fetch('/api/r2/sign-upload', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.id || 'demo-user'
-        },
-        body: JSON.stringify({
-          filename: file.name,
-          contentType: file.type
-        })
-      });
+      // TEMPORARY: Skip R2 upload due to environment variable issues
+      // Use mock upload for now
+      console.log('Using mock upload due to R2 configuration issues');
 
-      if (!signResponse.ok) {
-        throw new Error('Failed to get upload URL');
-      }
+      // Simulate upload progress
+      setUploadProgress(25);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setUploadProgress(50);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setUploadProgress(75);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setUploadProgress(100);
 
-      const { signedUrl, key } = await signResponse.json();
+      // Create mock file data
+      const mockKey = `uploads/${user?.id || 'demo-user'}/${Date.now()}_${file.name}`;
+      const mockUrl = `https://example.com/mock-upload/${mockKey}`;
 
-      // Upload file to R2
-      const uploadResponse = await fetch(signedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type
-        }
-      });
+      // Mock successful upload
+      console.log('Mock upload completed successfully');
 
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload file');
-      }
-
-      setUploadedFile({ file, key });
+      setUploadedFile({ file, key: mockKey });
       setSelectedSource('upload');
       setSelectedDocument(null);
-      toast.success('PDF uploaded successfully');
+      toast.success('PDF uploaded successfully (mock upload)');
 
       // Analyze the uploaded PDF
       setAnalyzingPdf(true);
