@@ -135,18 +135,10 @@ export default function ProfilePage() {
     setMessage({ type: '', text: '' });
 
     try {
-      // Update Clerk data first - use only explicitly safe field names
-      const safeFirstName = String(formData.firstName || '');
-      const safeLastName = String(formData.lastName || '');
+      console.log('Saving profile data:', formData);
 
-      console.log('Raw formData:', formData);
-      console.log('Safe firstName:', safeFirstName);
-      console.log('Safe lastName:', safeLastName);
-
-      await user.update({
-        firstName: safeFirstName,
-        lastName: safeLastName
-      });
+      // Skip Clerk update for now - save directly to Supabase
+      // TODO: Fix Clerk firstName/lastName support later
 
       // Update or create Supabase profile using service
       const saveResult = await saveUserProfile(user.id, {
