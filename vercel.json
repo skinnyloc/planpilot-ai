@@ -1,5 +1,4 @@
 {
-  "_comment": "Vercel config for Vite + React + API functions",
   "functions": {
     "app/api/**/*.js": {
       "runtime": "nodejs18.x"
@@ -11,11 +10,8 @@
       "destination": "/app/api/$1"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite"
+  ]
 }
