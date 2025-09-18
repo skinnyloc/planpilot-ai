@@ -15,6 +15,13 @@ const r2Client = new S3Client({
 
 const BUCKET_NAME = process.env.R2_BUCKET || 'planpolitai';
 
+// Debug logging
+console.log('R2 Configuration Check:');
+console.log('- R2_BUCKET env var:', process.env.R2_BUCKET);
+console.log('- BUCKET_NAME resolved:', BUCKET_NAME);
+console.log('- R2_ENDPOINT:', process.env.R2_ENDPOINT);
+console.log('- R2_ACCESS_KEY_ID exists:', !!process.env.R2_ACCESS_KEY_ID);
+
 export async function POST(request) {
   try {
     // Authenticate user
@@ -37,10 +44,14 @@ export async function POST(request) {
     }
 
     // Validate R2 configuration
-    if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
-      console.error('R2 credentials not configured');
+    if (!process.env.R2_ENDPOINT || !process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY || !BUCKET_NAME) {
+      console.error('R2 configuration missing:');
+      console.error('- R2_ENDPOINT:', !!process.env.R2_ENDPOINT);
+      console.error('- R2_ACCESS_KEY_ID:', !!process.env.R2_ACCESS_KEY_ID);
+      console.error('- R2_SECRET_ACCESS_KEY:', !!process.env.R2_SECRET_ACCESS_KEY);
+      console.error('- BUCKET_NAME:', BUCKET_NAME);
       return NextResponse.json(
-        { error: 'Storage service not configured' },
+        { error: 'Storage service not configured properly' },
         { status: 500 }
       );
     }
