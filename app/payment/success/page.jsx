@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, Link } from 'react-router-dom';
 import { CheckCircle, ArrowRight, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 
 export default function PaymentSuccessPage() {
   const [status, setStatus] = useState('processing'); // processing, success, error
@@ -67,7 +66,7 @@ export default function PaymentSuccessPage() {
             There was an issue processing your payment. Please try again.
           </p>
           <Link
-            href="/pricing"
+            to="/pricing"
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors"
           >
             Return to Pricing
@@ -138,14 +137,14 @@ export default function PaymentSuccessPage() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/dashboard"
+            to="/dashboard"
             className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors font-semibold"
           >
             Go to Dashboard
             <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
-            href="/business-ideas"
+            to="/business-idea"
             className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-6 py-3 rounded-lg hover:bg-secondary/80 transition-colors"
           >
             Generate Business Plan

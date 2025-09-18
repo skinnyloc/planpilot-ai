@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Check, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import PayPalSubscriptionButton from '@/components/PayPalSubscriptionButton';
+import PayPalButton from '@/components/PayPalButton';
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState('monthly');
@@ -106,7 +106,8 @@ export default function PricingPage() {
               ))}
             </ul>
 
-            <PayPalSubscriptionButton
+            <PayPalButton
+              planId="pro"
               billingCycle={billingCycle}
               onSuccess={handleSubscriptionSuccess}
               onError={handleSubscriptionError}

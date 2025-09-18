@@ -66,11 +66,10 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
             try {
               setIsProcessing(true);
 
-              const response = await fetch('http://localhost:3001/api/checkout', {
+              const response = await fetch('/api/checkout', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
-                  'x-user-id': user?.id || 'demo-user'
                 },
                 body: JSON.stringify({
                   planId,

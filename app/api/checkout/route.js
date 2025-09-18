@@ -1,14 +1,7 @@
-// This is a placeholder API route for Vite/React Router setup
-// In production, you would implement these routes in your backend server (Express, Fastify, etc.)
-
-export default function handler(req, res) {
-  // This route needs to be implemented in your backend server
-  // For now, return a development message
-  res.status(501).json({
-    error: 'API route not implemented',
-    message: 'This route needs to be implemented in your backend server for production'
-  });
-}
+import { NextResponse } from 'next/server';
+import { Client } from '@paypal/paypal-server-sdk';
+import { LogLevel } from '@paypal/paypal-server-sdk';
+import { auth } from '@clerk/nextjs';
 
 // Configure PayPal client for sandbox environment
 const client = new Client({

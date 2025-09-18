@@ -31,7 +31,9 @@
     "test:coverage": "vitest run --coverage",
     "test:quick": "node tests/testRunner.js --skip-performance",
     "test:critical": "node tests/testRunner.js --filter critical",
-    "test:pre-deploy": "node tests/testRunner.js --skip-performance && npm run lint && npm run build"
+    "test:pre-deploy": "node tests/testRunner.js --skip-performance && npm run lint && npm run build",
+    "deploy:prod": "git add -A && git commit -m \"deploy: prod\" || echo no changes && git push origin main",
+    "deploy:preview": "git checkout -B deploy-$(date +%Y%m%d-%H%M%S) && git add -A && git commit -m \"deploy: preview\" || echo no changes && git push -u origin HEAD"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.890.0",

@@ -17,6 +17,7 @@ import PricingPage from "../app/pricing/page.jsx"
 import ProfilePage from "../app/profile/page.jsx"
 import TestPage from "../app/test/page.jsx"
 import DebugPage from "../app/debug/page.jsx"
+import PaymentSuccessPage from "../app/payment/success/page.jsx"
 
 // Import authentication pages
 import SignInPage from "../app/sign-in/page.jsx"
@@ -70,6 +71,7 @@ function App() {
           } />
           {/* Public pages - anyone can view */}
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/test" element={<TestPage />} />
           <Route path="/debug" element={<DebugPage />} />
 
