@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { POST as checkoutHandler } from './api/checkout.js';
+import { POST as captureOrderHandler } from './api/capture-order.js';
 import { POST as generateProposalHandler } from './api/generate-proposal.js';
-import { GET as documentsGetHandler, POST as documentsPostHandler } from './api/documents.js';
+import { GET as documentsGetHandler, POST as documentsPostHandler, DELETE as documentsDeleteHandler } from './api/documents.js';
 import { POST as r2SignUploadHandler } from './api/r2-sign-upload.js';
 import { POST as analyzePdfHandler } from './api/analyze-pdf.js';
 
@@ -26,6 +27,15 @@ app.post('/api/checkout', async (req, res) => {
     await checkoutHandler(req, res);
   } catch (error) {
     console.error('Checkout route error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/capture-order', async (req, res) => {
+  try {
+    await captureOrderHandler(req, res);
+  } catch (error) {
+    console.error('Capture order route error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -54,6 +64,15 @@ app.post('/api/documents', async (req, res) => {
     await documentsPostHandler(req, res);
   } catch (error) {
     console.error('Documents POST route error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+  try {
+    await documentsDeleteHandler(req, res);
+  } catch (error) {
+    console.error('Documents DELETE route error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

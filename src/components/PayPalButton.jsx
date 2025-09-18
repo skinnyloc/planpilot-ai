@@ -66,10 +66,11 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
             try {
               setIsProcessing(true);
 
-              const response = await fetch('/api/checkout', {
+              const response = await fetch('http://localhost:3001/api/checkout', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
+                  'x-user-id': user.id // Pass Clerk user ID
                 },
                 body: JSON.stringify({
                   planId,
@@ -78,7 +79,13 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
               });
 
               if (!response.ok) {
-                const errorData = await response.json();
+                let errorData;
+                try {
+                  const text = await response.text();
+                  errorData = text ? JSON.parse(text) : { error: 'No response data' };
+                } catch (e) {
+                  errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+                }
                 throw new Error(errorData.error || 'Failed to create order');
               }
 

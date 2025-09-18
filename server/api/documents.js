@@ -114,3 +114,51 @@ export async function POST(req, res) {
     });
   }
 }
+
+export async function DELETE(req, res) {
+  try {
+    // For demo purposes, we'll use a mock user ID since we don't have auth setup
+    const userId = 'demo-user';
+    const documentId = req.params?.id || req.query?.id;
+
+    if (!documentId) {
+      return res.status(400).json({
+        error: 'Document ID is required'
+      });
+    }
+
+    // Delete the document record
+    const { data, error } = await supabase
+      .from('documents')
+      .delete()
+      .eq('id', documentId)
+      .eq('user_id', userId) // Ensure user can only delete their own documents
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase delete error:', error);
+      return res.status(500).json({
+        error: 'Failed to delete document'
+      });
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        error: 'Document not found or access denied'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Document deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Documents DELETE API error:', error);
+    return res.status(500).json({
+      error: 'Failed to delete document',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+}

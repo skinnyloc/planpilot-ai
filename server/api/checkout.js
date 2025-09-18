@@ -18,8 +18,7 @@ const client = new Client({
 
 export async function POST(request, response) {
   try {
-    // For demo purposes, we'll mock authentication
-    // In production, implement proper authentication middleware
+    // Get user ID from Clerk via headers
     const userId = request.headers['x-user-id'] || 'demo-user';
 
     if (!userId) {

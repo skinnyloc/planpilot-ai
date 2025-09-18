@@ -16,17 +16,22 @@ export default function GrantProposalsPage() {
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [analyzingPdf, setAnalyzingPdf] = useState(false);
+  const [pdfAnalysis, setPdfAnalysis] = useState(null);
   const [savedDocuments, setSavedDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [loadingDocuments, setLoadingDocuments] = useState(false);
 
   // Step 2: Proposal Modes
   const [selectedModes, setSelectedModes] = useState([]);
+  const [availableGrants, setAvailableGrants] = useState([]);
+  const [selectedGrant, setSelectedGrant] = useState(null);
+  const [loadingGrants, setLoadingGrants] = useState(false);
   const proposalModes = [
-    { id: 'bank', label: 'Bank', description: 'Bank loan application' },
-    { id: 'investor', label: 'Investor', description: 'Investor pitch presentation' },
-    { id: 'loan', label: 'Loan', description: 'General loan application' },
-    { id: 'grant', label: 'Match a Grant', description: 'Match with available grants' }
+    { id: 'bank_loan', label: 'Bank', description: 'Bank loan application' },
+    { id: 'investor_pitch', label: 'Investor', description: 'Investor pitch presentation' },
+    { id: 'general_loan', label: 'Loan', description: 'General loan application' },
+    { id: 'grant_match', label: 'Match a Grant', description: 'Match with available grants' }
   ];
 
   // Generation state
@@ -43,7 +48,11 @@ export default function GrantProposalsPage() {
   const loadSavedDocuments = async () => {
     try {
       setLoadingDocuments(true);
-      const response = await fetch('/api/documents?type=business_plan');
+      const response = await fetch('http://localhost:3001/api/documents?type=business_plan', {
+        headers: {
+          'x-user-id': user?.id || 'demo-user'
+        }
+      });
       if (response.ok) {
         const data = await response.json();
         setSavedDocuments(data.documents || []);
@@ -75,13 +84,15 @@ export default function GrantProposalsPage() {
 
     try {
       // Get signed upload URL
-      const signResponse = await fetch('/api/r2/sign-upload', {
+      const signResponse = await fetch('http://localhost:3001/api/r2/sign-upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || 'demo-user'
+        },
         body: JSON.stringify({
           filename: file.name,
-          contentType: file.type,
-          folder: 'uploads'
+          contentType: file.type
         })
       });
 
@@ -89,10 +100,10 @@ export default function GrantProposalsPage() {
         throw new Error('Failed to get upload URL');
       }
 
-      const { uploadUrl, key } = await signResponse.json();
+      const { signedUrl, key } = await signResponse.json();
 
       // Upload file to R2
-      const uploadResponse = await fetch(uploadUrl, {
+      const uploadResponse = await fetch(signedUrl, {
         method: 'PUT',
         body: file,
         headers: {
@@ -108,6 +119,33 @@ export default function GrantProposalsPage() {
       setSelectedSource('upload');
       setSelectedDocument(null);
       toast.success('PDF uploaded successfully');
+
+      // Analyze the uploaded PDF
+      setAnalyzingPdf(true);
+      try {
+        const analysisResponse = await fetch('http://localhost:3001/api/proposals/analyze-pdf', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user?.id || 'demo-user'
+          },
+          body: JSON.stringify({ key })
+        });
+
+        if (analysisResponse.ok) {
+          const analysisData = await analysisResponse.json();
+          setPdfAnalysis(analysisData);
+          toast.success('PDF analyzed successfully');
+        } else {
+          console.error('PDF analysis failed');
+          toast.error('PDF analysis failed, but you can still generate proposals');
+        }
+      } catch (analysisError) {
+        console.error('PDF analysis error:', analysisError);
+        toast.error('PDF analysis failed, but you can still generate proposals');
+      } finally {
+        setAnalyzingPdf(false);
+      }
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Failed to upload PDF');
@@ -123,18 +161,63 @@ export default function GrantProposalsPage() {
     setUploadedFile(null);
   };
 
+  const loadAvailableGrants = async () => {
+    try {
+      setLoadingGrants(true);
+      // Mock grants data - in real implementation, this would call a grants API
+      const mockGrants = [
+        {
+          id: 'grant-1',
+          title: 'Small Business Innovation Grant',
+          agency: 'SBA',
+          amount: '$50,000',
+          description: 'Support for innovative small businesses',
+          requirements: ['Technology innovation', 'Job creation', 'Revenue under $1M']
+        },
+        {
+          id: 'grant-2',
+          title: 'Green Technology Grant',
+          agency: 'EPA',
+          amount: '$100,000',
+          description: 'Environmental technology development',
+          requirements: ['Environmental impact', 'Sustainability', 'Clean technology']
+        },
+        {
+          id: 'grant-3',
+          title: 'Minority Business Enterprise Grant',
+          agency: 'Commerce',
+          amount: '$25,000',
+          description: 'Support for minority-owned businesses',
+          requirements: ['Minority ownership', 'Business plan', 'Growth potential']
+        }
+      ];
+      setAvailableGrants(mockGrants);
+    } catch (error) {
+      console.error('Error loading grants:', error);
+      setAvailableGrants([]);
+    } finally {
+      setLoadingGrants(false);
+    }
+  };
+
   const handleModeToggle = (modeId) => {
     setSelectedModes(prev =>
       prev.includes(modeId)
         ? prev.filter(id => id !== modeId)
         : [...prev, modeId]
     );
+
+    // Load grants when Grant Match mode is selected
+    if (modeId === 'grant_match' && !selectedModes.includes(modeId)) {
+      loadAvailableGrants();
+    }
   };
 
   const canGenerate = () => {
     const hasSource = selectedSource && (uploadedFile || selectedDocument);
     const hasModes = selectedModes.length > 0;
-    return hasSource && hasModes;
+    const hasGrantIfNeeded = !selectedModes.includes('grant_match') || selectedGrant;
+    return hasSource && hasModes && hasGrantIfNeeded;
   };
 
   const handleGenerateProposal = async () => {
@@ -147,14 +230,24 @@ export default function GrantProposalsPage() {
     setGenerationError('');
 
     try {
-      const response = await fetch('/api/proposals/generate', {
+      const response = await fetch('http://localhost:3001/api/generate-proposal', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || 'demo-user'
+        },
         body: JSON.stringify({
+          type: 'proposal',
+          businessPlan: selectedSource === 'upload'
+            ? (pdfAnalysis?.planText || 'PDF_CONTENT_PLACEHOLDER')
+            : selectedDocument?.title || '',
+          proposalType: selectedModes[0] || 'bank_loan', // Use first selected mode
           source: selectedSource,
           key: uploadedFile?.key,
           documentId: selectedDocument?.id,
-          modes: selectedModes
+          modes: selectedModes,
+          selectedGrant: selectedGrant,
+          pdfAnalysis: pdfAnalysis
         })
       });
 
@@ -163,10 +256,22 @@ export default function GrantProposalsPage() {
       }
 
       const result = await response.json();
-      toast.success('Proposal generated and saved to Documents!');
 
-      // Reset form
-      resetForm();
+      if (result.success) {
+        const proposalCount = result.proposals?.length || 1;
+        const successfulProposals = result.proposals?.filter(p => !p.error)?.length || 1;
+
+        if (successfulProposals === proposalCount) {
+          toast.success(`${proposalCount} proposal${proposalCount > 1 ? 's' : ''} generated and saved to Documents!`);
+        } else {
+          toast.success(`${successfulProposals} of ${proposalCount} proposals generated successfully. Check Documents for details.`);
+        }
+
+        // Reset form
+        resetForm();
+      } else {
+        throw new Error(result.error || 'Generation failed');
+      }
     } catch (error) {
       console.error('Generation error:', error);
       setGenerationError('Failed to generate proposal. Please try again.');
@@ -180,6 +285,9 @@ export default function GrantProposalsPage() {
     setUploadedFile(null);
     setSelectedDocument(null);
     setSelectedModes([]);
+    setSelectedGrant(null);
+    setAvailableGrants([]);
+    setPdfAnalysis(null);
     setGenerationError('');
   };
 
@@ -223,15 +331,17 @@ export default function GrantProposalsPage() {
                     Upload an external PDF business plan document
                   </p>
 
-                  {isUploading ? (
+                  {isUploading || analyzingPdf ? (
                     <div className="space-y-2">
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
                           className="bg-primary h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
+                          style={{ width: isUploading ? `${uploadProgress}%` : '100%' }}
                         />
                       </div>
-                      <p className="text-sm text-muted-foreground">Uploading...</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isUploading ? 'Uploading...' : 'Analyzing PDF...'}
+                      </p>
                     </div>
                   ) : (
                     <>
@@ -254,9 +364,16 @@ export default function GrantProposalsPage() {
                   )}
 
                   {uploadedFile && (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-foreground">
-                      <Check className="h-4 w-4 text-green-600" />
-                      {uploadedFile.file.name}
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-foreground">
+                        <Check className="h-4 w-4 text-green-600" />
+                        {uploadedFile.file.name}
+                      </div>
+                      {pdfAnalysis && (
+                        <div className="text-xs text-muted-foreground bg-green-50 border border-green-200 rounded p-2">
+                          ✓ PDF analyzed successfully - ready for proposal generation
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -358,6 +475,71 @@ export default function GrantProposalsPage() {
                 </label>
               ))}
             </div>
+
+            {/* Grant Selection - Show when Grant Match mode is selected */}
+            {selectedModes.includes('grant_match') && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="text-lg font-medium text-foreground mb-3 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-blue-600" />
+                  Select a Grant to Match
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Choose a grant that best matches your business plan and goals.
+                </p>
+
+                {loadingGrants ? (
+                  <div className="text-center py-6">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-muted-foreground">Loading available grants...</p>
+                  </div>
+                ) : availableGrants.length > 0 ? (
+                  <div className="space-y-3">
+                    {availableGrants.map((grant) => (
+                      <label
+                        key={grant.id}
+                        className={`flex flex-col p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                          selectedGrant?.id === grant.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-blue-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="selectedGrant"
+                          checked={selectedGrant?.id === grant.id}
+                          onChange={() => setSelectedGrant(grant)}
+                          className="sr-only"
+                        />
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="font-medium text-foreground">{grant.title}</div>
+                            <div className="text-sm text-blue-600 font-medium">{grant.agency} • {grant.amount}</div>
+                          </div>
+                          <div className={`flex items-center justify-center w-5 h-5 border-2 rounded-full ${
+                            selectedGrant?.id === grant.id
+                              ? 'border-blue-500 bg-blue-500'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedGrant?.id === grant.id && (
+                              <div className="w-2 h-2 bg-white rounded-full"></div>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{grant.description}</p>
+                        <div className="text-xs text-muted-foreground">
+                          <strong>Requirements:</strong> {grant.requirements.join(', ')}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Search className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No grants available at this time.</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -384,6 +566,16 @@ export default function GrantProposalsPage() {
                   {selectedModes.length > 0 ? `${selectedModes.length} mode(s) selected` : 'Select proposal modes'}
                 </span>
               </div>
+              {selectedModes.includes('grant_match') && (
+                <div className="flex items-center gap-2 text-sm">
+                  <div className={`w-4 h-4 rounded-full ${
+                    selectedGrant ? 'bg-green-500' : 'bg-muted'
+                  }`} />
+                  <span className={selectedGrant ? 'text-foreground' : 'text-muted-foreground'}>
+                    {selectedGrant ? `Grant selected: ${selectedGrant.title}` : 'Select a grant to match'}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Generate Button */}

@@ -1,13 +1,10 @@
-// import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 // Load environment variables
 dotenv.config({ path: '.env.local' });
 
-// const openai = new OpenAI({
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
+// OpenAI is commented out for demo - we use mock responses
 
 const supabase = createClient(
   process.env.VITE_SUPABASE_URL,
@@ -17,20 +14,31 @@ const supabase = createClient(
 export async function POST(req, res) {
   try {
     console.log('🚀 Starting proposal generation...');
-    const { type, businessPlan, proposalType, grant } = req.body;
+    const { type, businessPlan, proposalType, modes, selectedGrant, pdfAnalysis, source, key, documentId } = req.body;
     console.log('📝 Request body:', JSON.stringify(req.body, null, 2));
 
     // Validate required fields
-    if (!type || !businessPlan || !proposalType) {
-      console.error('❌ Missing required fields:', { type, businessPlan: !!businessPlan, proposalType });
+    if (!type || !businessPlan) {
+      console.error('❌ Missing required fields:', { type, businessPlan: !!businessPlan });
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: type, businessPlan, and proposalType are required'
+        error: 'Missing required fields: type and businessPlan are required'
+      });
+    }
+
+    // Use modes array if provided, otherwise fall back to single proposalType
+    const proposalModes = modes && modes.length > 0 ? modes : [proposalType];
+
+    if (!proposalModes || proposalModes.length === 0) {
+      console.error('❌ No proposal modes specified');
+      return res.status(400).json({
+        success: false,
+        error: 'At least one proposal mode must be specified'
       });
     }
 
     // For grant_match type, ensure grant is provided
-    if (proposalType === 'grant_match' && !grant) {
+    if (proposalModes.includes('grant_match') && !selectedGrant) {
       console.error('❌ Grant required for grant_match type');
       return res.status(400).json({
         success: false,
@@ -38,32 +46,64 @@ export async function POST(req, res) {
       });
     }
 
-    console.log('✅ Validation passed, generating proposal...');
+    console.log('✅ Validation passed, generating proposals for modes:', proposalModes);
 
-    // Generate proposal using OpenAI (temporarily using mock for demo)
-    const proposalContent = await generateProposalWithAI(proposalType, businessPlan, grant);
-    console.log('✅ Proposal generated successfully');
+    // Generate proposals for each selected mode
+    const generatedProposals = [];
+    const documentIds = [];
 
-    // Save the generated proposal to database
-    let documentId = null;
-    try {
-      const saveResult = await saveProposalToDatabase(proposalContent, proposalType, grant);
-      documentId = saveResult.documentId;
-      console.log('✅ Proposal saved to database with ID:', documentId);
-    } catch (saveError) {
-      console.error('⚠️ Failed to save to database, continuing anyway:', saveError.message);
+    for (const mode of proposalModes) {
+      try {
+        console.log(`🔄 Generating ${mode} proposal...`);
+
+        // Use selectedGrant for grant_match mode, null for others
+        const grantInfo = mode === 'grant_match' ? selectedGrant : null;
+
+        // Generate proposal using AI (temporarily using mock for demo)
+        const proposalContent = await generateProposalWithAI(mode, businessPlan, grantInfo, pdfAnalysis);
+        console.log(`✅ ${mode} proposal generated successfully`);
+
+        // Save the generated proposal to database
+        let savedDocumentId = null;
+        try {
+          const saveResult = await saveProposalToDatabase(proposalContent, mode, grantInfo);
+          savedDocumentId = saveResult.documentId;
+          documentIds.push(savedDocumentId);
+          console.log(`✅ ${mode} proposal saved to database with ID:`, savedDocumentId);
+        } catch (saveError) {
+          console.error(`⚠️ Failed to save ${mode} proposal to database:`, saveError.message);
+        }
+
+        generatedProposals.push({
+          mode,
+          content: proposalContent,
+          grant: grantInfo,
+          documentId: savedDocumentId
+        });
+
+      } catch (modeError) {
+        console.error(`❌ Failed to generate ${mode} proposal:`, modeError.message);
+        // Continue with other modes even if one fails
+        generatedProposals.push({
+          mode,
+          error: modeError.message,
+          grant: mode === 'grant_match' ? selectedGrant : null
+        });
+      }
     }
 
     return res.json({
       success: true,
-      content: proposalContent,
+      proposals: generatedProposals,
       metadata: {
-        proposalType,
-        grant: proposalType === 'grant_match' ? grant : null,
+        modes: proposalModes,
+        selectedGrant: selectedGrant || null,
+        source,
+        pdfAnalysis: !!pdfAnalysis,
         generatedAt: new Date().toISOString(),
-        wordCount: proposalContent.split(' ').length
+        totalProposals: generatedProposals.length
       },
-      documentId
+      documentIds
     });
 
   } catch (error) {
@@ -92,7 +132,7 @@ export async function POST(req, res) {
   }
 }
 
-async function generateProposalWithAI(proposalType, businessPlan, grant) {
+async function generateProposalWithAI(proposalType, businessPlan, grant, pdfAnalysis) {
   try {
     console.log('🤖 Generating proposal (using mock for demo)...');
 
@@ -100,7 +140,16 @@ async function generateProposalWithAI(proposalType, businessPlan, grant) {
     const proposalTitle = PROPOSAL_TYPES[proposalType] || proposalType;
     const grantInfo = grant ? `for ${grant.title}` : '';
 
-    const mockContent = `# ${proposalTitle} ${grantInfo}
+    // Use PDF analysis data if available for richer content
+    const analysisInfo = pdfAnalysis ? `
+
+## PDF Analysis Summary
+
+${pdfAnalysis.planText.substring(0, 500)}...
+
+Based on the comprehensive analysis of the uploaded business plan document, this ${proposalTitle.toLowerCase()} is strategically positioned for success.` : '';
+
+    const mockContent = `# ${proposalTitle} ${grantInfo}${analysisInfo}
 
 ## Executive Summary
 
