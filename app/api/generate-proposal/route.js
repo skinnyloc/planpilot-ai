@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -14,66 +9,99 @@ const supabase = createClient(
 export async function POST(request) {
   try {
     console.log('🚀 Starting proposal generation...');
-    const body = await request.json();
-    console.log('📝 Request body:', JSON.stringify(body, null, 2));
-
-    const { type, businessPlan, proposalType, grant } = body;
+    const { type, businessPlan, proposalType, modes, selectedGrant, pdfAnalysis, source, key, documentId } = await request.json();
+    console.log('📝 Request body received');
 
     // Validate required fields
-    if (!type || !businessPlan || !proposalType) {
-      console.error('❌ Missing required fields:', { type, businessPlan: !!businessPlan, proposalType });
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required fields: type, businessPlan, and proposalType are required'
-        },
-        { status: 400 }
-      );
+    if (!type || !businessPlan) {
+      console.error('❌ Missing required fields:', { type, businessPlan: !!businessPlan });
+      return NextResponse.json({
+        success: false,
+        error: 'Missing required fields: type and businessPlan are required'
+      }, { status: 400 });
+    }
+
+    // Use modes array if provided, otherwise fall back to single proposalType
+    const proposalModes = modes && modes.length > 0 ? modes : [proposalType];
+
+    if (!proposalModes || proposalModes.length === 0) {
+      console.error('❌ No proposal modes specified');
+      return NextResponse.json({
+        success: false,
+        error: 'At least one proposal mode must be specified'
+      }, { status: 400 });
     }
 
     // For grant_match type, ensure grant is provided
-    if (proposalType === 'grant_match' && !grant) {
+    if (proposalModes.includes('grant_match') && !selectedGrant) {
       console.error('❌ Grant required for grant_match type');
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Grant information is required for grant proposal matching'
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Grant information is required for grant proposal matching'
+      }, { status: 400 });
     }
 
-    console.log('✅ Validation passed, generating proposal...');
+    console.log('✅ Validation passed, generating proposals for modes:', proposalModes);
 
-    // Generate proposal using OpenAI
-    const proposalContent = await generateProposalWithAI(proposalType, businessPlan, grant);
-    console.log('✅ Proposal generated successfully');
+    // Generate proposals for each selected mode
+    const generatedProposals = [];
+    const documentIds = [];
 
-    // Save the generated proposal to database
-    let documentId = null;
-    try {
-      const saveResult = await saveProposalToDatabase(proposalContent, proposalType, grant);
-      documentId = saveResult.documentId;
-      console.log('✅ Proposal saved to database with ID:', documentId);
-    } catch (saveError) {
-      console.error('⚠️ Failed to save to database, continuing anyway:', saveError.message);
+    for (const mode of proposalModes) {
+      try {
+        console.log(`🔄 Generating ${mode} proposal...`);
+
+        // Use selectedGrant for grant_match mode, null for others
+        const grantInfo = mode === 'grant_match' ? selectedGrant : null;
+
+        // Generate proposal using AI (temporarily using mock for demo)
+        const proposalContent = await generateProposalWithAI(mode, businessPlan, grantInfo, pdfAnalysis);
+        console.log(`✅ ${mode} proposal generated successfully`);
+
+        // Save the generated proposal to database - skip for production demo
+        let savedDocumentId = null;
+        try {
+          const saveResult = await saveProposalToDatabase(proposalContent, mode, grantInfo);
+          savedDocumentId = saveResult.documentId;
+          documentIds.push(savedDocumentId);
+          console.log(`✅ ${mode} proposal saved to database with ID:`, savedDocumentId);
+        } catch (saveError) {
+          console.error(`⚠️ Failed to save ${mode} proposal to database:`, saveError.message);
+          // Create a mock document ID for demo
+          savedDocumentId = `demo-${mode}-${Date.now()}`;
+          documentIds.push(savedDocumentId);
+        }
+
+        generatedProposals.push({
+          mode,
+          content: proposalContent,
+          grant: grantInfo,
+          documentId: savedDocumentId
+        });
+
+      } catch (modeError) {
+        console.error(`❌ Failed to generate ${mode} proposal:`, modeError.message);
+        // Continue with other modes even if one fails
+        generatedProposals.push({
+          mode,
+          error: modeError.message,
+          grant: mode === 'grant_match' ? selectedGrant : null
+        });
+      }
     }
 
     return NextResponse.json({
       success: true,
-      proposals: [{
-        mode: proposalType,
-        content: proposalContent,
-        grant: proposalType === 'grant_match' ? grant : null,
-        documentId: documentId
-      }],
+      proposals: generatedProposals,
       metadata: {
-        proposalType,
-        grant: proposalType === 'grant_match' ? grant : null,
+        modes: proposalModes,
+        selectedGrant: selectedGrant || null,
+        source,
+        pdfAnalysis: !!pdfAnalysis,
         generatedAt: new Date().toISOString(),
-        wordCount: proposalContent.split(' ').length
+        totalProposals: generatedProposals.length
       },
-      documentIds: documentId ? [documentId] : []
+      documentIds
     });
 
   } catch (error) {
@@ -94,25 +122,32 @@ export async function POST(request) {
       statusCode = 503;
     }
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: statusCode }
-    );
+    return NextResponse.json({
+      success: false,
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    }, { status: statusCode });
   }
 }
 
-async function generateProposalWithAI(proposalType, businessPlan, grant) {
+async function generateProposalWithAI(proposalType, businessPlan, grant, pdfAnalysis) {
   try {
     console.log('🤖 Generating proposal (using mock for demo)...');
 
+    // Mock AI response for demo purposes
     const proposalTitle = PROPOSAL_TYPES[proposalType] || proposalType;
     const grantInfo = grant ? `for ${grant.title}` : '';
 
-    const mockContent = `# ${proposalTitle} ${grantInfo}
+    // Use PDF analysis data if available for richer content
+    const analysisInfo = pdfAnalysis ? `
+
+## PDF Analysis Summary
+
+${pdfAnalysis.planText.substring(0, 500)}...
+
+Based on the comprehensive analysis of the uploaded business plan document, this ${proposalTitle.toLowerCase()} is strategically positioned for success.` : '';
+
+    const mockContent = `# ${proposalTitle} ${grantInfo}${analysisInfo}
 
 ## Executive Summary
 
@@ -167,97 +202,17 @@ Proposal Type: ${proposalTitle}
 ${grant ? `Grant: ${grant.title}` : ''}`;
 
     console.log('📥 Mock proposal generated');
+
+    if (!mockContent || mockContent.trim().length === 0) {
+      throw new Error('Generated content is empty');
+    }
+
     return mockContent;
 
   } catch (error) {
     console.error('🚨 Proposal generation error:', error);
     throw new Error(`Proposal generation error: ${error.message}`);
   }
-}
-
-function getSystemPrompt(proposalType) {
-  const basePrompt = `You are a professional business writer with expertise in creating compelling proposals and applications. Generate clear, professional, and persuasive content that maximizes approval chances.`;
-
-  const typeSpecificPrompts = {
-    grant_match: `${basePrompt}
-
-You specialize in grant writing and have successfully helped businesses secure millions in grant funding. Your proposals are known for:
-- Perfect alignment with grant requirements
-- Compelling narratives that highlight impact
-- Professional structure and formatting
-- Clear demonstration of value proposition
-- Strong evidence of capability and track record`,
-
-    bank_loan: `${basePrompt}
-
-You specialize in bank loan applications and understand what financial institutions look for:
-- Strong financial projections and creditworthiness
-- Clear repayment plans and business viability
-- Professional presentation of business case
-- Risk mitigation strategies
-- Collateral and security information`,
-
-    investor_pitch: `${basePrompt}
-
-You specialize in investor presentations and understand what attracts investment:
-- Compelling market opportunity and business model
-- Strong management team and execution capability
-- Clear path to profitability and growth
-- Competitive advantages and differentiation
-- Attractive return on investment potential`,
-
-    general_loan: `${basePrompt}
-
-You specialize in general loan applications across various institutions:
-- Adaptable content for different lender types
-- Strong business case and financial planning
-- Professional presentation and documentation
-- Clear purpose and use of funds
-- Demonstrated ability to repay`
-  };
-
-  return typeSpecificPrompts[proposalType] || basePrompt;
-}
-
-function getUserPrompt(proposalType, businessPlan, grant) {
-  let prompt = `Based on the following business plan, create a professional ${PROPOSAL_TYPES[proposalType] || proposalType} proposal:
-
-BUSINESS PLAN:
-${businessPlan}
-
-`;
-
-  if (proposalType === 'grant_match' && grant) {
-    prompt += `GRANT INFORMATION:
-- Title: ${grant.title}
-- Agency: ${grant.agency}
-- Amount: ${grant.amount}
-- Requirements: ${grant.requirements?.join(', ') || 'Not specified'}
-- Description: ${grant.description}
-
-Create a grant proposal that specifically addresses the grant requirements and demonstrates how this business aligns with the grant's objectives.`;
-  } else {
-    const typeInstructions = {
-      bank_loan: 'Create a bank loan application that emphasizes financial stability, repayment capability, and business viability. Include financial projections and risk mitigation.',
-      investor_pitch: 'Create an investor pitch that highlights market opportunity, growth potential, competitive advantages, and return on investment. Focus on scalability and profitability.',
-      general_loan: 'Create a general loan application that presents a strong business case, clear use of funds, and demonstrated repayment ability. Keep it professional and comprehensive.'
-    };
-
-    prompt += typeInstructions[proposalType] || 'Create a professional proposal document.';
-  }
-
-  prompt += `
-
-FORMAT REQUIREMENTS:
-- Use professional business language
-- Include clear headings and sections
-- Make it comprehensive but concise
-- Focus on key selling points and benefits
-- End with a strong call to action
-
-Generate a complete, professional proposal document that maximizes approval chances.`;
-
-  return prompt;
 }
 
 const PROPOSAL_TYPES = {
@@ -273,12 +228,8 @@ async function saveProposalToDatabase(content, proposalType, grant) {
       `${PROPOSAL_TYPES[proposalType]} - ${grant.title}` :
       PROPOSAL_TYPES[proposalType];
 
-    const filename = `${title.replace(/[^a-zA-Z0-9\s]/g, '_')}.md`;
-    const r2Key = `proposals/demo-user/${Date.now()}_${filename}`;
-
-    // Skip database saving for now to avoid RLS and foreign key issues
-    // Return a mock document ID for the demo
-    console.log('✅ Mock proposal saved (database save skipped for demo)');
+    // Skip database save for production demo - return mock ID
+    console.log('✅ Mock proposal saved (database save skipped for production demo)');
     console.log('📝 Proposal content length:', content.length);
     console.log('📄 Title:', title);
 
