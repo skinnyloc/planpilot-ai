@@ -276,10 +276,27 @@ async function saveProposalToDatabase(content, proposalType, grant) {
     const filename = `${title.replace(/[^a-zA-Z0-9\s]/g, '_')}.md`;
     const r2Key = `proposals/demo-user/${Date.now()}_${filename}`;
 
+    // First, ensure demo user exists in profiles table
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: 'demo-user-id',
+        email: 'demo@example.com',
+        username: 'demo-user',
+        first_name: 'Demo',
+        last_name: 'User'
+      })
+      .select()
+      .single();
+
+    if (profileError) {
+      console.log('Profile creation info:', profileError.message);
+    }
+
     const { data, error } = await supabase
       .from('documents')
       .insert({
-        user_id: 'demo-user',
+        user_id: 'demo-user-id',
         document_type: 'grant_proposal',
         filename: filename,
         original_filename: filename,
