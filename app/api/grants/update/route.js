@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { grantUpdateScheduler } from '../../../../src/lib/services/grantUpdateScheduler.js';
+import { grantUpdateScheduler } from "@/lib/services/grantUpdateScheduler.js";
 
 export async function POST(request) {
   try {

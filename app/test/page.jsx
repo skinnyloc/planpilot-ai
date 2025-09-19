@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/clerk-react';
-import { supabase } from '../../src/lib/supabase.js';
+import { supabase } from '@/lib/supabase.js';
 
 export default function TestPage() {
   const [status, setStatus] = useState('Loading...');
