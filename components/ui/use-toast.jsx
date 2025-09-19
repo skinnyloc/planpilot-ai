@@ -1,3 +1,5 @@
+"use client";
+
 // Inspired by react-hot-toast library
 import { useState, useEffect, createContext, useContext } from "react";
 
