@@ -123,7 +123,7 @@ export default function GrantProposalsPage() {
             'Content-Type': 'application/json',
             'x-user-id': user?.id || 'demo-user'
           },
-          body: JSON.stringify({ key })
+          body: JSON.stringify({ key: mockKey })
         });
 
         if (analysisResponse.ok) {
