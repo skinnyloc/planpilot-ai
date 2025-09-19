@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs';
 
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
@@ -47,7 +47,7 @@ export async function POST(request) {
     try {
       if (source === 'pdf') {
         // Analyze PDF content
-        const analyzeResponse = await fetch(`${process.env.VITE_APP_URL}/api/proposals/analyze-pdf`, {
+        const analyzeResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/proposals/analyze-pdf`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
