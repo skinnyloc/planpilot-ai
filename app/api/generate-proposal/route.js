@@ -273,21 +273,32 @@ async function saveProposalToDatabase(content, proposalType, grant) {
       `${PROPOSAL_TYPES[proposalType]} - ${grant.title}` :
       PROPOSAL_TYPES[proposalType];
 
+    const filename = `${title.replace(/[^a-zA-Z0-9\s]/g, '_')}.md`;
+    const r2Key = `proposals/demo-user/${Date.now()}_${filename}`;
+
     const { data, error } = await supabase
       .from('documents')
       .insert({
         user_id: 'demo-user',
-        filename: title,
-        file_path: `proposals/demo-user/${Date.now()}_${title.replace(/[^a-zA-Z0-9]/g, '_')}.md`,
-        document_type: 'proposal',
-        description: content.substring(0, 200) + '...',
+        document_type: 'grant_proposal',
+        filename: filename,
+        original_filename: filename,
+        file_url: `https://example.com/${r2Key}`, // Mock URL since we're not using R2
         file_size: content.length,
         mime_type: 'text/markdown',
-        metadata: {
+        r2_key: r2Key,
+        title: title,
+        description: content.substring(0, 200) + '...',
+        upload_status: 'completed',
+        processing_status: 'completed',
+        ai_generated: true,
+        generation_metadata: {
           proposalType,
           grant: grant || null,
           generatedAt: new Date().toISOString(),
-          wordCount: content.split(' ').length
+          wordCount: content.split(' ').length,
+          model: 'mock-generator',
+          version: '1.0'
         }
       })
       .select()
