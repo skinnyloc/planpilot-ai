@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { searchGrants } from '../../../src/lib/services/grantDataService.js';
+import { searchGrants } from "@/lib/services/grantDataService.js";
 
 export async function GET(request) {
   try {
@@ -71,7 +71,7 @@ export async function POST(request) {
     };
 
     // Save to database
-    const { supabase } = await import('../../../src/lib/supabase.js');
+    const { supabase } = await import('@/lib/supabase.js');
     const { data, error } = await supabase
       .from('grants')
       .insert(grantToSave)
