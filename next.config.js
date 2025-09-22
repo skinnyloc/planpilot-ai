@@ -1,26 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
-    // Disable type checking during build for faster deployment
     ignoreBuildErrors: true,
   },
   eslint: {
-    // Disable ESLint during build for faster deployment
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['planpilotai.app'], // Add domains for external images if needed
+    domains: ['planpilotai.app'],
   },
   env: {
-    // Make environment variables available to the client
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_PAYPAL_CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
   },
   poweredByHeader: false,
   reactStrictMode: true,
-  // Disable telemetry
-  telemetry: false,
 }
 
 module.exports = nextConfig

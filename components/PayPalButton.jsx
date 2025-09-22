@@ -27,7 +27,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
         }
 
         const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=Ab6MKwY3DX3P0K441jv6tZXbhHmXbtnK3K4dQLYldKjXMjquLusIsvTui17G_l03gJsCkgaY0Wa-mX7f&vault=true&intent=subscription`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription`;
         script.setAttribute('data-sdk-integration-source', 'button-factory');
         script.onload = () => resolve(window.paypal);
         script.onerror = () => reject(new Error('Failed to load PayPal SDK'));

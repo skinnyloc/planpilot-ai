@@ -1,17 +1,41 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { rateLimit } from '@/lib/rateLimit';
 
-/**
- * OpenAI API Route for AI Content Generation
- * Handles all AI operations server-side to protect API keys
- */
+const limiter = rateLimit({
+  maxRequests: 10, // 10 requests per minute
+  windowMs: 60000
+});
+
 export async function POST(request) {
   try {
-    const { prompt, type, maxTokens = 3500, temperature = 0.7, userId } = await request.json();
-
-    // Validate required fields
-    if (!prompt || !userId) {
+    // Check rate limit
+    const rateLimitResult = limiter(request);
+    if (rateLimitResult.limited) {
       return NextResponse.json(
-        { error: 'Prompt and userId are required' },
+        { error: 'Rate limit exceeded. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': rateLimitResult.retryAfter.toString()
+          }
+        }
+      );
+    }
+
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const { prompt, type, maxTokens = 3500, temperature = 0.7 } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json(
+        { error: 'Prompt is required' },
         { status: 400 }
       );
     }
@@ -107,10 +131,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('AI generation error:', error);
     return NextResponse.json(
-      {
-        error: 'Failed to generate content',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
+      { error: 'Failed to generate content' },
       { status: 500 }
     );
   }
