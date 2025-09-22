@@ -8,13 +8,12 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [demoMode, setDemoMode] = useState(false);
+  // Removed demo mode - PayPal is now live
   const paypalButtonRef = useRef(null);
   const { user } = useUser();
 
-  // Check if PayPal is configured
-  const isPayPalConfigured = import.meta.env.VITE_PAYPAL_CLIENT_ID &&
-    import.meta.env.VITE_PAYPAL_CLIENT_ID !== 'YOUR_PAYPAL_CLIENT_ID_HERE';
+  // PayPal is now live - always configured
+  const isPayPalConfigured = true;
 
   useEffect(() => {
     if (!user) return;
@@ -40,12 +39,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
       try {
         setError(null);
 
-        // Check if PayPal is configured (always true now with hardcoded client ID)
-        if (!true) {
-          setDemoMode(true);
-          setIsLoading(false);
-          return;
-        }
+        // PayPal is live - no demo mode
 
         const paypal = await loadPayPalSDK();
 
@@ -160,46 +154,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
     );
   }
 
-  if (demoMode) {
-    return (
-      <div className="space-y-4">
-        {/* Demo Mode Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-          <AlertCircle className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-          <p className="text-sm text-blue-700 mb-2">
-            <strong>Demo Mode</strong> - PayPal not configured
-          </p>
-          <p className="text-xs text-blue-600">
-            Run <code>npm run setup-paypal</code> to configure real payments
-          </p>
-        </div>
-
-        {/* Demo Payment Button */}
-        <button
-          onClick={handleDemoPayment}
-          disabled={isProcessing}
-          className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-4 px-6 rounded-xl transition-all duration-200 text-lg ${
-            isProcessing ? 'opacity-50 cursor-not-allowed' : 'transform hover:scale-105 hover:shadow-lg'
-          }`}
-        >
-          {isProcessing ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Processing Demo Payment...
-            </div>
-          ) : (
-            'Continue with Demo Payment'
-          )}
-        </button>
-
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground">
-            This is a demo - no real payment will be processed
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Demo mode removed - PayPal is live
 
   if (error) {
     return (

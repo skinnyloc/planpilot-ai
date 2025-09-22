@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { auth } from '@clerk/nextjs/server';
 import OpenAI from 'openai';
 
 const supabase = createClient(
@@ -13,8 +14,14 @@ const openai = new OpenAI({
 
 export async function POST(request) {
   try {
-    // For demo purposes, we'll use a test user ID
-    const userId = 'demo_user';
+    // Use actual Clerk authentication instead of demo mode
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
     const { businessIdea, grant, proposalModes } = await request.json();
 

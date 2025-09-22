@@ -9,7 +9,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['example.com'], // Add domains for external images if needed
+    domains: ['planpilotai.app'], // Add domains for external images if needed
   },
   env: {
     // Make environment variables available to the client
