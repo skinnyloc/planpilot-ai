@@ -12,7 +12,7 @@ export default function PayPalSubscriptionButton({ billingCycle = 'monthly', onS
     yearly: 'P-5HR698674T6427033NDEOFSY'
   };
 
-  const clientId = 'Ab6MKwY3DX3P0K441jv6tZXbhHmXbtnK3K4dQLYldKjXMjquLusIsvTui17G_l03gJsCkgaY0Wa-mX7f';
+  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
   useEffect(() => {
     // Load PayPal SDK
