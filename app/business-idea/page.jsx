@@ -21,7 +21,7 @@ import {
   MapPin,
   Briefcase
 } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { useUser as useAuthUser } from '@/lib/hooks/useUser';
 import { canAccessFeature } from '@/lib/utils/planChecker';
 import {

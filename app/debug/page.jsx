@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 
 export default function DebugPage() {
   const { isLoaded, isSignedIn, user } = useUser();

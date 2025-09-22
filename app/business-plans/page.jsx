@@ -16,7 +16,7 @@ import {
   AlertCircle,
   X
 } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { canAccessFeature } from '@/lib/utils/planChecker';
 import UpgradePrompt from '@/components/UpgradePrompt';
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { User, Mail, Save, RotateCcw, Lock, Crown, Calendar, Activity, AlertCircle, CheckCircle } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { getUserProfile, saveUserProfile } from '@/lib/services/profileService';
 import { isProUser, getUserPlan } from '@/lib/utils/planChecker';
 import UpgradePrompt from '@/components/UpgradePrompt';

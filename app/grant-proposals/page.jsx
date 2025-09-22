@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CheckCircle, Upload, FileText, Award, Search, ChevronDown, AlertCircle, Check } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { canAccessFeature } from '@/lib/utils/planChecker';
 import UpgradePrompt from '@/components/UpgradePrompt';
 import { toast } from 'sonner';

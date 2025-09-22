@@ -19,6 +19,8 @@ const nextConfig = {
   },
   poweredByHeader: false,
   reactStrictMode: true,
+  // Disable telemetry
+  telemetry: false,
 }
 
 module.exports = nextConfig

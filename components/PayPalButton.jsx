@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { Loader2, AlertCircle, Shield } from 'lucide-react';
 
 export default function PayPalButton({ planId, billingCycle = 'monthly', onSuccess, onError, onCancel }) {
