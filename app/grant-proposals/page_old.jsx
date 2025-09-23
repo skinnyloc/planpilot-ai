@@ -1,0 +1,527 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { Wand2, Loader2, Download, AlertCircle, ExternalLink } from 'lucide-react';
+
+const GrantList = ({ onSelect, selectedGrantId }) => {
+    const [grants, setGrants] = useState([]);
+
+    useEffect(() => {
+        // Mock grant data
+        const mockGrants = [
+            {
+                id: 1,
+                title: "Small Business Innovation Research (SBIR) Grant",
+                sponsor: "National Science Foundation",
+                due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+                award_min: 50000,
+                award_max: 1500000
+            },
+            {
+                id: 2,
+                title: "Minority Business Development Grant",
+                sponsor: "Department of Commerce",
+                due_date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(),
+                award_min: 25000,
+                award_max: 250000
+            },
+            {
+                id: 3,
+                title: "Women's Business Center Grant",
+                sponsor: "Small Business Administration",
+                due_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
+                award_min: 75000,
+                award_max: 500000
+            }
+        ];
+        setGrants(mockGrants);
+    }, []);
+
+    return (
+        <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            maxHeight: '400px',
+            overflowY: 'auto',
+            paddingRight: '8px'
+        }}>
+            {grants.map(grant => (
+                <div
+                    key={grant.id}
+                    style={{
+                        backgroundColor: selectedGrantId === grant.id ? '#333' : '#000',
+                        border: selectedGrantId === grant.id ? '2px solid #f59e0b' : '1px solid #f59e0b',
+                        borderRadius: '8px',
+                        padding: '16px',
+                        cursor: 'pointer'
+                    }}
+                    onClick={() => onSelect(grant)}
+                >
+                    <h4 style={{
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#fafafa',
+                        marginBottom: '8px'
+                    }}>
+                        {grant.title}
+                    </h4>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <p style={{
+                            fontSize: '12px',
+                            color: '#999',
+                            margin: 0
+                        }}>
+                            {grant.sponsor} | Due: {new Date(grant.due_date).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                            })}
+                        </p>
+                        <button
+                            style={{
+                                backgroundColor: selectedGrantId === grant.id ? '#f59e0b' : 'transparent',
+                                color: selectedGrantId === grant.id ? '#000' : '#f59e0b',
+                                border: '1px solid #f59e0b',
+                                borderRadius: '4px',
+                                padding: '4px 12px',
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {selectedGrantId === grant.id ? 'Selected' : 'Select'}
+                        </button>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+export default function GrantProposalsPage() {
+    const [businessPlans, setBusinessPlans] = useState([]);
+    const [selectedBusinessPlan, setSelectedBusinessPlan] = useState(null);
+    const [selectedGrant, setSelectedGrant] = useState(null);
+    const [selectedProposalMode, setSelectedProposalMode] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generatedProposal, setGeneratedProposal] = useState(null);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const stored = localStorage.getItem('businessPlans');
+        if (stored) {
+            setBusinessPlans(JSON.parse(stored));
+        }
+    }, []);
+
+    const MODES = ["Bank", "Investor", "Loan", "Match a Grant"];
+
+    const handleModeChange = (mode) => {
+        setSelectedProposalMode(mode);
+    };
+
+    const handleGenerate = async () => {
+        setError('');
+        if (!selectedBusinessPlan) {
+            setError('Please select a business plan.');
+            return;
+        }
+        if (!selectedProposalMode) {
+            setError('Please select a proposal mode.');
+            return;
+        }
+        if (selectedProposalMode === 'Match a Grant' && !selectedGrant) {
+            setError('Please select a grant for matched mode.');
+            return;
+        }
+
+        setIsGenerating(true);
+        setGeneratedProposal(null);
+
+        // Simulate API call
+        setTimeout(() => {
+            const proposalContent = `# Grant Proposal
+
+## Executive Summary
+**Proposal for:** ${selectedBusinessPlan.business_name}
+**Proposal Mode:** ${selectedProposalMode}
+${selectedGrant ? `**Targeted Grant:** ${selectedGrant.title}` : ''}
+
+## Business Plan Overview
+This grant proposal is based on our comprehensive business plan for ${selectedBusinessPlan.business_name}, which outlines our strategic vision and implementation roadmap.
+
+## Business Plan Content
+${selectedBusinessPlan.content}
+
+${selectedProposalMode === 'Match a Grant' && selectedGrant ? `
+
+## Grant Alignment
+This proposal specifically addresses the requirements of the ${selectedGrant.title} from ${selectedGrant.sponsor}. We are requesting funding in the range of $${selectedGrant.award_min?.toLocaleString()} - $${selectedGrant.award_max?.toLocaleString()}.` : ''}
+
+## Funding Request
+Based on our detailed business plan analysis, we are seeking ${selectedProposalMode.toLowerCase()} funding to support the implementation and growth phases of ${selectedBusinessPlan.business_name}.`;
+
+            // Generate PDF content for the grant proposal
+            const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 800
+>>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(${selectedBusinessPlan.business_name} - Grant Proposal) Tj
+0 -30 Td
+/F1 12 Tf
+(Generated on: ${new Date().toLocaleDateString()}) Tj
+0 -30 Td
+(Proposal Mode: ${selectedProposalMode}) Tj
+0 -40 Td
+(${proposalContent.replace(/[()]/g, '').substring(0, 400)}...) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+0000000274 00000 n
+0000000526 00000 n
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+625
+%%EOF`;
+
+            setGeneratedProposal({
+                content: proposalContent,
+                pdfContent: pdfContent,
+                businessName: selectedBusinessPlan.business_name,
+                proposalMode: selectedProposalMode
+            });
+            setIsGenerating(false);
+        }, 3000); // Slightly longer for more comprehensive content generation
+    };
+
+    const formatMarkdown = (content) => {
+        return content
+            .replace(/^# (.+)$/gm, '<h1 style="font-size: 1.5rem; font-weight: bold; color: #fafafa; margin: 1.5rem 0 0.75rem 0;">$1</h1>')
+            .replace(/^## (.+)$/gm, '<h2 style="font-size: 1.25rem; font-weight: 600; color: #f59e0b; margin: 1.25rem 0 0.5rem 0;">$1</h2>')
+            .replace(/^### (.+)$/gm, '<h3 style="font-size: 1.1rem; font-weight: 600; color: #fafafa; margin: 1rem 0 0.5rem 0;">$3</h3>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong style="color: #f59e0b;">$1</strong>')
+            .replace(/\n\n/g, '</p><p style="color: #ccc; line-height: 1.6; margin-bottom: 1rem;">')
+            .replace(/^(.+)$/gm, '<p style="color: #ccc; line-height: 1.6; margin-bottom: 1rem;">$1</p>')
+            .replace(/<p style="color: #ccc; line-height: 1.6; margin-bottom: 1rem;"><h/g, '<h')
+            .replace(/h[1-3]><\/p>/g, '>');
+    };
+
+    const isGenerateDisabled = !selectedBusinessPlan || !selectedProposalMode || (selectedProposalMode === 'Match a Grant' && !selectedGrant) || isGenerating;
+
+    return (
+        <div style={{ padding: '32px' }}>
+            <div style={{ marginBottom: '32px' }}>
+                <h1 style={{
+                    fontSize: '2rem',
+                    fontWeight: 'bold',
+                    color: '#fafafa',
+                    marginBottom: '8px'
+                }}>
+                    Letter Proposal Generator
+                </h1>
+                <p style={{ color: '#999', fontSize: '1rem', margin: 0 }}>
+                    Create compelling proposals for funding and investment opportunities.
+                </p>
+            </div>
+
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '32px'
+            }}>
+                {/* Left Column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Business Idea Selection */}
+                    <div style={{
+                        backgroundColor: '#000',
+                        border: '1px solid #f59e0b',
+                        borderRadius: '12px',
+                        padding: '24px'
+                    }}>
+                        <h3 style={{
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: '#fafafa',
+                            marginBottom: '16px'
+                        }}>
+                            1. Select Business Plan
+                        </h3>
+                        <select
+                            value={selectedBusinessPlan?.id || ''}
+                            onChange={(e) => setSelectedBusinessPlan(businessPlans.find(p => p.id === e.target.value))}
+                            style={{
+                                width: '100%',
+                                padding: '12px',
+                                border: '1px solid #f59e0b',
+                                borderRadius: '8px',
+                                backgroundColor: '#000',
+                                color: '#fff',
+                                fontSize: '14px',
+                                outline: 'none'
+                            }}
+                        >
+                            <option value="">Choose a business plan...</option>
+                            {businessPlans.map(plan => (
+                                <option key={plan.id} value={plan.id}>
+                                    {plan.business_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Proposal Mode Selection */}
+                    <div style={{
+                        backgroundColor: '#000',
+                        border: '1px solid #f59e0b',
+                        borderRadius: '12px',
+                        padding: '24px'
+                    }}>
+                        <h3 style={{
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: '#fafafa',
+                            marginBottom: '16px'
+                        }}>
+                            2. Select Proposal Mode
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            {MODES.map(mode => (
+                                <label
+                                    key={mode}
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        cursor: 'pointer',
+                                        color: '#fafafa'
+                                    }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="proposalMode"
+                                        value={mode}
+                                        checked={selectedProposalMode === mode}
+                                        onChange={() => handleModeChange(mode)}
+                                        style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            accentColor: '#f59e0b'
+                                        }}
+                                    />
+                                    {mode}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Grant Selection (conditional) */}
+                    {selectedProposalMode === 'Match a Grant' && (
+                        <div style={{
+                            backgroundColor: '#000',
+                            border: '1px solid #f59e0b',
+                            borderRadius: '12px',
+                            padding: '24px'
+                        }}>
+                            <h3 style={{
+                                fontSize: '1.25rem',
+                                fontWeight: '600',
+                                color: '#fafafa',
+                                marginBottom: '16px'
+                            }}>
+                                3. Select Grant
+                            </h3>
+                            <GrantList onSelect={setSelectedGrant} selectedGrantId={selectedGrant?.id} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Column */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Generate Section */}
+                    <div style={{
+                        backgroundColor: '#000',
+                        border: '1px solid #f59e0b',
+                        borderRadius: '12px',
+                        padding: '24px'
+                    }}>
+                        <h3 style={{
+                            fontSize: '1.25rem',
+                            fontWeight: '600',
+                            color: '#fafafa',
+                            marginBottom: '16px'
+                        }}>
+                            Generate Proposal
+                        </h3>
+                        <button
+                            onClick={handleGenerate}
+                            disabled={isGenerateDisabled}
+                            style={{
+                                width: '100%',
+                                backgroundColor: isGenerateDisabled ? '#666' : '#f59e0b',
+                                color: isGenerateDisabled ? '#999' : '#000',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '14px 24px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                cursor: isGenerateDisabled ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                marginBottom: '16px'
+                            }}
+                        >
+                            {isGenerating ? (
+                                <Loader2 style={{ width: '16px', height: '16px', animation: 'spin 1s linear infinite' }} />
+                            ) : (
+                                <Wand2 style={{ width: '16px', height: '16px' }} />
+                            )}
+                            Generate Proposal
+                        </button>
+                        {error && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                color: '#ff6b6b',
+                                fontSize: '14px'
+                            }}>
+                                <AlertCircle style={{ width: '16px', height: '16px' }} />
+                                {error}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Generated Proposal Display */}
+                    {generatedProposal && (
+                        <div style={{
+                            backgroundColor: '#000',
+                            border: '1px solid #f59e0b',
+                            borderRadius: '12px',
+                            padding: '24px'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                marginBottom: '16px',
+                                paddingBottom: '16px',
+                                borderBottom: '1px solid #f59e0b'
+                            }}>
+                                <h3 style={{
+                                    fontSize: '1.25rem',
+                                    fontWeight: '600',
+                                    color: '#fafafa',
+                                    margin: 0
+                                }}>
+                                    Generated Letter Proposal
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        if (generatedProposal.pdfContent) {
+                                            const blob = new Blob([generatedProposal.pdfContent], { type: 'application/pdf' });
+                                            const url = window.URL.createObjectURL(blob);
+                                            const link = window.document.createElement('a');
+                                            link.href = url;
+                                            link.download = `${generatedProposal.businessName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_grant_proposal_${generatedProposal.proposalMode.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                                            window.document.body.appendChild(link);
+                                            link.click();
+                                            window.document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                        }
+                                    }}
+                                    style={{
+                                        backgroundColor: '#f59e0b',
+                                        color: '#000',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        padding: '8px 16px',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    <Download style={{ width: '14px', height: '14px' }} />
+                                    Download PDF
+                                </button>
+                            </div>
+                            <div
+                                style={{
+                                    maxHeight: '400px',
+                                    overflowY: 'auto',
+                                    padding: '16px',
+                                    backgroundColor: '#1a1a1a',
+                                    borderRadius: '8px',
+                                    border: '1px solid #333'
+                                }}
+                                dangerouslySetInnerHTML={{ __html: formatMarkdown(generatedProposal.content) }}
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}

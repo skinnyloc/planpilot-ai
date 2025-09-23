@@ -29,7 +29,7 @@ export default function MainLayout({ children }) {
     { name: 'Business Idea', href: '/business-idea', icon: Lightbulb },
     { name: 'Business Plans', href: '/business-plans', icon: FileText },
     { name: 'Grants', href: '/grants', icon: Gift },
-    { name: 'Grant Proposals', href: '/grant-proposals', icon: Send },
+    { name: 'Letter Proposals', href: '/grant-proposals', icon: Send },
     { name: 'Credit Guide', href: '/credit-guide', icon: CreditCard },
     { name: 'Documents', href: '/documents', icon: File },
     { name: 'Pricing', href: '/pricing', icon: DollarSign },
