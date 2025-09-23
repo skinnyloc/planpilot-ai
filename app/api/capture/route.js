@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Client } from '@paypal/paypal-server-sdk';
 import { LogLevel } from '@paypal/paypal-server-sdk';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Configure PayPal client
@@ -21,8 +21,8 @@ const client = new Client({
 
 // Initialize Supabase client
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "placeholder",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
 );
 
 /**
@@ -94,7 +94,7 @@ async function upgradeUserPlan(userId, planId, billingCycle, paymentDetails) {
 export async function POST(request) {
   try {
     // Verify user is authenticated
-    const { userId } = await auth();
+    const { userId } = auth();
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },

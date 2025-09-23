@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 export default function PayPalSubscriptionButton({ billingCycle = 'monthly', onSuccess, onError }) {
   const paypalRef = useRef();
   const [isLoaded, setIsLoaded] = useState(false);
+  const [clientId, setClientId] = useState(null);
 
   // PayPal Plan IDs
   const planIds = {
@@ -12,9 +13,29 @@ export default function PayPalSubscriptionButton({ billingCycle = 'monthly', onS
     yearly: 'P-5HR698674T6427033NDEOFSY'
   };
 
-  const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+  useEffect(() => {
+    // Fetch PayPal client ID securely
+    const fetchClientId = async () => {
+      try {
+        const response = await fetch('/api/paypal/client-id');
+        const data = await response.json();
+        if (data.clientId) {
+          setClientId(data.clientId);
+        }
+      } catch (error) {
+        console.error('Failed to fetch PayPal client ID:', error);
+        if (onError) {
+          onError(error);
+        }
+      }
+    };
+
+    fetchClientId();
+  }, []);
 
   useEffect(() => {
+    if (!clientId) return;
+
     // Load PayPal SDK
     const loadPayPalScript = () => {
       if (window.paypal) {

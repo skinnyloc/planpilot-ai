@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   Menu,
@@ -14,26 +15,45 @@ import {
   CreditCard,
   File,
   DollarSign,
-  User
+  User,
+  Shield
 } from "lucide-react";
-import DemoControls from "@/components/DemoControls";
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: Home },
-  { name: 'Business Idea', href: '/business-idea', icon: Lightbulb },
-  { name: 'Business Plans', href: '/business-plans', icon: FileText },
-  { name: 'Grants', href: '/grants', icon: Gift },
-  { name: 'Grant Proposals', href: '/grant-proposals', icon: Send },
-  { name: 'Credit Guide', href: '/credit-guide', icon: CreditCard },
-  { name: 'Documents', href: '/documents', icon: File },
-  { name: 'Pricing', href: '/pricing', icon: DollarSign },
-  { name: 'Profile', href: '/profile', icon: User },
-];
 
 export default function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const currentPath = pathname;
+  const { user, isLoaded } = useUser();
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      const adminEmail = 'vansworld1987@gmail.com';
+      const userEmail = user?.emailAddresses?.[0]?.emailAddress;
+      setIsAdmin(userEmail === adminEmail);
+    }
+  }, [isLoaded, user]);
+
+  const getNavigation = () => {
+    const baseNavigation = [
+      { name: 'Dashboard', href: '/dashboard', icon: Home },
+      { name: 'Business Idea', href: '/business-idea', icon: Lightbulb },
+      { name: 'Business Plans', href: '/business-plans', icon: FileText },
+      { name: 'Grants', href: '/grants', icon: Gift },
+      { name: 'Grant Proposals', href: '/grant-proposals', icon: Send },
+      { name: 'Credit Guide', href: '/credit-guide', icon: CreditCard },
+      { name: 'Documents', href: '/documents', icon: File },
+      { name: 'Pricing', href: '/pricing', icon: DollarSign },
+      { name: 'Profile', href: '/profile', icon: User },
+    ];
+
+    if (isAdmin) {
+      baseNavigation.push({ name: 'Admin Panel', href: '/admin', icon: Shield });
+    }
+
+    return baseNavigation;
+  };
 
   const handleNavClick = () => {
     setSidebarOpen(false);
@@ -69,7 +89,7 @@ export default function MainLayout({ children }) {
           </div>
           <nav className="px-3 py-4">
             <ul className="space-y-1">
-              {navigation.map((item) => {
+              {getNavigation().map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPath === item.href;
                 return (
@@ -108,7 +128,7 @@ export default function MainLayout({ children }) {
           </div>
           <nav className="flex-1 px-3 py-4">
             <ul className="space-y-1">
-              {navigation.map((item) => {
+              {getNavigation().map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPath === item.href;
                 return (
@@ -160,8 +180,6 @@ export default function MainLayout({ children }) {
         </main>
       </div>
 
-      {/* Demo Controls - Remove in production */}
-      <DemoControls />
     </div>
   );
 }

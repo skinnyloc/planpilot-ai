@@ -8,15 +8,30 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  // Removed demo mode - PayPal is now live
+  const [clientId, setClientId] = useState(null);
   const paypalButtonRef = useRef(null);
   const { user } = useUser();
 
-  // PayPal is now live - always configured
-  const isPayPalConfigured = true;
+  useEffect(() => {
+    // Fetch PayPal client ID securely
+    const fetchClientId = async () => {
+      try {
+        const response = await fetch('/api/paypal/client-id');
+        const data = await response.json();
+        if (data.clientId) {
+          setClientId(data.clientId);
+        }
+      } catch (error) {
+        console.error('Failed to fetch PayPal client ID:', error);
+        setError('Failed to load PayPal configuration');
+      }
+    };
+
+    fetchClientId();
+  }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !clientId) return;
 
     // Load PayPal SDK
     const loadPayPalSDK = () => {
@@ -27,7 +42,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
         }
 
         const script = document.createElement('script');
-        script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&vault=true&intent=subscription`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription`;
         script.setAttribute('data-sdk-integration-source', 'button-factory');
         script.onload = () => resolve(window.paypal);
         script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
@@ -120,28 +135,8 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
     };
 
     initializePayPal();
-  }, [user, planId, billingCycle, onSuccess, onError, onCancel]);
+  }, [user, clientId, planId, billingCycle, onSuccess, onError, onCancel]);
 
-  // Demo mode handler
-  const handleDemoPayment = () => {
-    setIsProcessing(true);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-
-      if (onSuccess) {
-        onSuccess({
-          orderID: 'demo-order-' + Date.now(),
-          paymentID: 'demo-payment-' + Date.now(),
-          details: { payer: { payer_id: 'demo-payer' } }
-        });
-      }
-
-      // Redirect to success page
-      window.location.href = `/payment/success?token=demo-order&PayerID=demo-payer`;
-    }, 2000);
-  };
 
   if (!user) {
     return (
@@ -154,7 +149,6 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
     );
   }
 
-  // Demo mode removed - PayPal is live
 
   if (error) {
     return (

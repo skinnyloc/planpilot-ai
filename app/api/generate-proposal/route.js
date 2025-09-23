@@ -1,20 +1,29 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "placeholder",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
 );
 
 export async function POST(request) {
   try {
-    console.log('🚀 Starting proposal generation...');
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { type, businessPlan, proposalType, modes, selectedGrant, pdfAnalysis, source, key, documentId } = await request.json();
-    console.log('📝 Request body received');
 
     // Validate required fields
     if (!type || !businessPlan) {
-      console.error('❌ Missing required fields:', { type, businessPlan: !!businessPlan });
       return NextResponse.json({
         success: false,
         error: 'Missing required fields: type and businessPlan are required'
@@ -25,7 +34,6 @@ export async function POST(request) {
     const proposalModes = modes && modes.length > 0 ? modes : [proposalType];
 
     if (!proposalModes || proposalModes.length === 0) {
-      console.error('❌ No proposal modes specified');
       return NextResponse.json({
         success: false,
         error: 'At least one proposal mode must be specified'
@@ -34,14 +42,11 @@ export async function POST(request) {
 
     // For grant_match type, ensure grant is provided
     if (proposalModes.includes('grant_match') && !selectedGrant) {
-      console.error('❌ Grant required for grant_match type');
       return NextResponse.json({
         success: false,
         error: 'Grant information is required for grant proposal matching'
       }, { status: 400 });
     }
-
-    console.log('✅ Validation passed, generating proposals for modes:', proposalModes);
 
     // Generate proposals for each selected mode
     const generatedProposals = [];
@@ -49,26 +54,21 @@ export async function POST(request) {
 
     for (const mode of proposalModes) {
       try {
-        console.log(`🔄 Generating ${mode} proposal...`);
-
         // Use selectedGrant for grant_match mode, null for others
         const grantInfo = mode === 'grant_match' ? selectedGrant : null;
 
-        // Generate proposal using AI (temporarily using mock for demo)
+        // Generate proposal using AI
         const proposalContent = await generateProposalWithAI(mode, businessPlan, grantInfo, pdfAnalysis);
-        console.log(`✅ ${mode} proposal generated successfully`);
 
-        // Save the generated proposal to database - skip for production demo
+        // Save the generated proposal to database
         let savedDocumentId = null;
         try {
-          const saveResult = await saveProposalToDatabase(proposalContent, mode, grantInfo);
+          const saveResult = await saveProposalToDatabase(proposalContent, mode, grantInfo, userId);
           savedDocumentId = saveResult.documentId;
           documentIds.push(savedDocumentId);
-          console.log(`✅ ${mode} proposal saved to database with ID:`, savedDocumentId);
         } catch (saveError) {
-          console.error(`⚠️ Failed to save ${mode} proposal to database:`, saveError.message);
-          // Create a mock document ID for demo
-          savedDocumentId = `demo-${mode}-${Date.now()}`;
+          // Create a temporary document ID if save fails
+          savedDocumentId = `temp-${mode}-${Date.now()}`;
           documentIds.push(savedDocumentId);
         }
 
@@ -80,7 +80,6 @@ export async function POST(request) {
         });
 
       } catch (modeError) {
-        console.error(`❌ Failed to generate ${mode} proposal:`, modeError.message);
         // Continue with other modes even if one fails
         generatedProposals.push({
           mode,
@@ -105,14 +104,12 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('💥 Proposal generation error:', error);
-
     // Provide specific error messages based on error type
     let errorMessage = 'Failed to generate proposal';
     let statusCode = 500;
 
     if (error.message.includes('API key')) {
-      errorMessage = 'OpenAI API configuration error';
+      errorMessage = 'AI service configuration error';
       statusCode = 503;
     } else if (error.message.includes('rate limit')) {
       errorMessage = 'API rate limit exceeded. Please try again in a few minutes.';
@@ -124,93 +121,96 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: false,
-      error: errorMessage,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: errorMessage
     }, { status: statusCode });
   }
 }
 
 async function generateProposalWithAI(proposalType, businessPlan, grant, pdfAnalysis) {
   try {
-    console.log('🤖 Generating proposal (using mock for demo)...');
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error('AI service not configured');
+    }
 
-    // Mock AI response for demo purposes
     const proposalTitle = PROPOSAL_TYPES[proposalType] || proposalType;
-    const grantInfo = grant ? `for ${grant.title}` : '';
+    const grantInfo = grant ? `for ${grant.title}: ${grant.description}` : '';
 
-    // Use PDF analysis data if available for richer content
-    const analysisInfo = pdfAnalysis ? `
+    // Build comprehensive prompt
+    let systemMessage = `You are an expert business consultant and proposal writer. Generate a professional, detailed ${proposalTitle.toLowerCase()} that is compelling and well-structured.`;
 
-## PDF Analysis Summary
+    let userPrompt = `Create a comprehensive ${proposalTitle} ${grantInfo}
 
-${pdfAnalysis.planText.substring(0, 500)}...
+Business Plan Context:
+${businessPlan}
 
-Based on the comprehensive analysis of the uploaded business plan document, this ${proposalTitle.toLowerCase()} is strategically positioned for success.` : '';
+${pdfAnalysis ? `Additional Analysis:
+${pdfAnalysis.planText}` : ''}
 
-    const mockContent = `# ${proposalTitle} ${grantInfo}${analysisInfo}
+${grant ? `Grant Requirements:
+- Title: ${grant.title}
+- Agency: ${grant.agency}
+- Description: ${grant.description}
+- Eligibility: ${grant.eligibility_criteria || 'Standard business eligibility'}
+- Amount: ${grant.funding_amount || 'Variable'}
 
-## Executive Summary
+Tailor the proposal specifically to this grant's requirements.` : ''}
 
-Based on the provided business plan, this ${proposalTitle.toLowerCase()} presents a compelling opportunity for funding. Our business demonstrates strong market potential, experienced leadership, and a clear path to profitability.
+Generate a professional proposal with these sections:
+1. Executive Summary
+2. Business Overview
+3. ${grant ? 'Grant Alignment & Impact' : 'Financial Requirements'}
+4. Market Analysis
+5. Management Team
+6. Financial Projections
+7. Implementation Timeline
+8. Risk Assessment
+9. Conclusion
 
-## Business Overview
+Make it compelling, specific, and actionable.`;
 
-The business plan outlines a comprehensive strategy with well-defined market opportunities and competitive advantages. Our company is positioned to capitalize on emerging trends and deliver exceptional value to customers.
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: systemMessage
+          },
+          {
+            role: 'user',
+            content: userPrompt
+          }
+        ],
+        max_tokens: 4000,
+        temperature: 0.7,
+      }),
+    });
 
-## Financial Requirements
+    if (!response.ok) {
+      throw new Error('AI service unavailable');
+    }
 
-- Requested Amount: $250,000
-- Use of Funds: Working capital, equipment, and growth initiatives
-- Repayment Terms: 36-60 months (if applicable)
-- Expected ROI: 25% annually
+    const data = await response.json();
 
-## Market Analysis
+    if (!data.choices || data.choices.length === 0) {
+      throw new Error('No content generated');
+    }
 
-Our target market shows significant growth potential with strong demand for our products/services. Market research indicates favorable conditions for business expansion and revenue growth.
+    const content = data.choices[0].message.content;
 
-## Management Team
-
-Our experienced leadership team brings together the necessary skills and expertise to execute this business plan successfully and ensure responsible use of funds.
-
-## Financial Projections
-
-- Year 1 Revenue: $500,000
-- Year 2 Revenue: $750,000
-- Year 3 Revenue: $1,000,000
-- Break-even: Month 18
-- ROI: 25% annually
-
-## Implementation Timeline
-
-Q1: Initial setup and team expansion
-Q2: Product development and market entry
-Q3: Marketing and customer acquisition
-Q4: Scale operations and expand market reach
-
-## Risk Assessment
-
-We have identified key business risks and developed comprehensive mitigation strategies to protect investor interests and ensure business continuity.
-
-## Conclusion
-
-This ${proposalTitle.toLowerCase()} represents a well-researched, low-risk, high-return opportunity. We are committed to transparent communication, responsible financial management, and delivering on our projected outcomes.
-
----
-
-Generated on: ${new Date().toLocaleDateString()}
-Proposal Type: ${proposalTitle}
-${grant ? `Grant: ${grant.title}` : ''}`;
-
-    console.log('📥 Mock proposal generated');
-
-    if (!mockContent || mockContent.trim().length === 0) {
+    if (!content || content.trim().length === 0) {
       throw new Error('Generated content is empty');
     }
 
-    return mockContent;
+    return content;
 
   } catch (error) {
-    console.error('🚨 Proposal generation error:', error);
     throw new Error(`Proposal generation error: ${error.message}`);
   }
 }
@@ -222,20 +222,43 @@ const PROPOSAL_TYPES = {
   general_loan: 'General Loan Application'
 };
 
-async function saveProposalToDatabase(content, proposalType, grant) {
+async function saveProposalToDatabase(content, proposalType, grant, userId) {
   try {
     const title = grant ?
       `${PROPOSAL_TYPES[proposalType]} - ${grant.title}` :
       PROPOSAL_TYPES[proposalType];
 
-    // Skip database save for production demo - return mock ID
-    console.log('✅ Mock proposal saved (database save skipped for production demo)');
-    console.log('📝 Proposal content length:', content.length);
-    console.log('📄 Title:', title);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
-    return { documentId: 'demo-doc-' + Date.now() };
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      // Return a temporary ID if database not configured
+      return { documentId: 'temp-' + Date.now() };
+    }
+
+    const { data, error } = await supabase
+      .from('documents')
+      .insert({
+        user_id: userId,
+        title: title,
+        document_type: proposalType,
+        content: content,
+        storage_key: `proposals/${userId}/${Date.now()}-${proposalType}.md`,
+        file_size: content.length,
+        mime_type: 'text/markdown',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
+
+    return { documentId: data.id };
   } catch (error) {
-    console.error('Database save error:', error);
     throw error;
   }
 }

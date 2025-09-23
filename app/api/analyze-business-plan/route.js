@@ -1,4 +1,8 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -7,6 +11,14 @@ const openai = new OpenAI({
 
 export async function POST(request) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { fileUrl } = await request.json();
 
     if (!fileUrl) {

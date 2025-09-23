@@ -1,31 +1,56 @@
 import { NextResponse } from 'next/server';
-import { searchGrants } from "@/lib/services/grantDataService.js";
+import { auth } from '@clerk/nextjs/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "placeholder",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
+);
 
 export async function GET(request) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
+    const searchTerm = searchParams.get('search') || '';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = (page - 1) * limit;
 
-    // Parse query parameters
-    const filters = {
-      searchTerm: searchParams.get('search') || '',
-      categoryId: searchParams.get('category') || null,
-      maxAmount: searchParams.get('maxAmount') ? parseInt(searchParams.get('maxAmount')) : null,
-      minAmount: searchParams.get('minAmount') ? parseInt(searchParams.get('minAmount')) : null,
-      deadline: searchParams.get('deadline') || null,
-      agency: searchParams.get('agency') || null,
-      tags: searchParams.get('tags') ? searchParams.get('tags').split(',') : [],
-      sortBy: searchParams.get('sortBy') || 'created_at',
-      sortOrder: searchParams.get('sortOrder') || 'desc',
-      page: parseInt(searchParams.get('page') || '1'),
-      limit: parseInt(searchParams.get('limit') || '20')
-    };
+    // Simple grants query
+    let query = supabase
+      .from('grants')
+      .select('*', { count: 'exact' })
+      .eq('status', 'active')
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
 
-    const result = await searchGrants(filters);
+    if (searchTerm) {
+      query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+    }
+
+    const { data: grants, error, count } = await query;
+
+    if (error) {
+      throw new Error(`Database error: ${error.message}`);
+    }
 
     return NextResponse.json({
       success: true,
-      data: result,
-      message: `Found ${result.total} grants`
+      data: {
+        grants: grants || [],
+        total: count || 0,
+        page,
+        limit,
+        totalPages: Math.ceil((count || 0) / limit)
+      },
+      message: `Found ${count || 0} grants`
     });
 
   } catch (error) {
@@ -43,12 +68,15 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const grantData = await request.json();
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
 
-    // TODO: Add authentication check for admin users
-    // if (!isAdmin(request)) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    const grantData = await request.json();
 
     // Validate required fields
     const requiredFields = ['title', 'description', 'agency'];
@@ -67,11 +95,10 @@ export async function POST(request) {
       status: 'active',
       verification_status: 'manual',
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      created_by: userId
     };
 
-    // Save to database
-    const { supabase } = await import('@/lib/supabase.js');
     const { data, error } = await supabase
       .from('grants')
       .insert(grantToSave)

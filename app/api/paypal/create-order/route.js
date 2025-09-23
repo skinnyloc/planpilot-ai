@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
+import { rateLimit } from '@/lib/rate-limit';
+import { Client } from '@paypal/paypal-server-sdk';
+import { LogLevel } from '@paypal/paypal-server-sdk';
+
+// Configure PayPal client
+const client = new Client({
+  clientCredentialsAuthCredentials: {
+    oAuthClientId: process.env.PAYPAL_CLIENT_ID,
+    oAuthClientSecret: process.env.PAYPAL_CLIENT_SECRET,
+  },
+  timeout: 0,
+  environment: process.env.PAYPAL_MODE || 'live',
+  logging: {
+    logLevel: LogLevel.ERROR,
+    logRequest: { logBody: false },
+    logResponse: { logHeaders: false }
+  }
+});
 
 export async function POST(request) {
   try {
     // Verify user is authenticated
-    const { userId } = await auth();
+    const { userId } = auth();
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -12,45 +30,63 @@ export async function POST(request) {
       );
     }
 
-    const body = await request.json();
-    const { amount = '9.99', currency = 'USD' } = body;
+    // Rate limiting: 3 payment attempts per minute per user
+    const rateLimitResult = rateLimit(`payment:${userId}`, 3, 60000);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many payment attempts. Please wait before trying again.' },
+        { status: 429 }
+      );
+    }
 
-    // Mock PayPal sandbox order creation for testing
-    const mockOrder = {
-      id: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      status: 'CREATED',
-      links: [
-        {
-          href: `https://api.sandbox.paypal.com/v2/checkout/orders/ORDER_${Date.now()}`,
-          rel: 'self',
-          method: 'GET'
-        },
-        {
-          href: `https://www.sandbox.paypal.com/checkoutnow?token=ORDER_${Date.now()}`,
-          rel: 'approve',
-          method: 'GET'
+    const body = await request.json();
+    const { amount = '19.99', currency = 'USD', planId = 'pro', billingCycle = 'monthly' } = body;
+
+    // Validate PayPal configuration
+    if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
+      return NextResponse.json(
+        { error: 'Payment service not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Create PayPal order
+    const ordersController = client.ordersController;
+
+    const orderRequest = {
+      body: {
+        intent: 'CAPTURE',
+        purchaseUnits: [
+          {
+            amount: {
+              currencyCode: currency,
+              value: amount
+            },
+            customId: `${userId}_${planId}_${billingCycle}`,
+            description: `PlanPilot AI ${planId} subscription - ${billingCycle}`
+          }
+        ],
+        applicationContext: {
+          returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/success`,
+          cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/pricing`,
+          brandName: 'PlanPilot AI',
+          landingPage: 'BILLING',
+          userAction: 'PAY_NOW'
         }
-      ]
+      }
     };
 
-    // Log order creation
-    console.log('PayPal sandbox order created:', {
-      orderId: mockOrder.id,
-      userId,
-      amount,
-      currency
-    });
+    const { body: order } = await ordersController.ordersCreate(orderRequest);
 
     return NextResponse.json({
-      orderId: mockOrder.id,
-      status: mockOrder.status,
-      links: mockOrder.links
+      orderId: order.id,
+      status: order.status,
+      links: order.links
     });
 
   } catch (error) {
-    console.error('Create order API error:', error);
     return NextResponse.json(
-      { error: 'Failed to create order', details: error.message },
+      { error: 'Failed to create order' },
       { status: 500 }
     );
   }

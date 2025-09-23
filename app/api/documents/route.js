@@ -1,11 +1,21 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from "next/server";
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key || url === "https://your-project.supabase.co" || key === "your-service-role-key") {
+    // Return null for demo/build environments
+    return null;
+  }
+
+  return createClient(url, key);
+}
 
 export async function GET(request) {
   try {
@@ -19,6 +29,17 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
+
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      return NextResponse.json({
+        success: false,
+        error: "Database not configured",
+        documents: [],
+        total: 0
+      }, { status: 500 });
+    }
 
     // Query documents from Supabase with RLS
     let query = supabase
@@ -77,6 +98,14 @@ export async function POST(request) {
       return NextResponse.json({
         error: "Title, document_type, and storage_key are required"
       }, { status: 400 });
+    }
+
+    const supabase = getSupabaseClient();
+
+    if (!supabase) {
+      return NextResponse.json({
+        error: "Database not configured"
+      }, { status: 500 });
     }
 
     const { data: document, error } = await supabase

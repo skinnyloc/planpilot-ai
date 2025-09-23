@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
@@ -21,6 +22,14 @@ const BUCKET_NAME = process.env.R2_BUCKET || 'planpolitai';
 
 export async function POST(request) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const { action, key, contentType, expiresIn = 3600 } = await request.json();
 
     // Validate required fields
@@ -105,6 +114,14 @@ export async function POST(request) {
 // Direct upload endpoint
 export async function PUT(request) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file');
     const key = formData.get('key');

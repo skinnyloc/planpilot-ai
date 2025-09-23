@@ -1,33 +1,26 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { rateLimit } from '@/lib/rateLimit';
-
-const limiter = rateLimit({
-  maxRequests: 10, // 10 requests per minute
-  windowMs: 60000
-});
+import { rateLimit } from '@/lib/rate-limit';
 
 export async function POST(request) {
   try {
-    // Check rate limit
-    const rateLimitResult = limiter(request);
-    if (rateLimitResult.limited) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded. Please try again later.' },
-        {
-          status: 429,
-          headers: {
-            'Retry-After': rateLimitResult.retryAfter.toString()
-          }
-        }
-      );
-    }
-
     const { userId } = auth();
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
+      );
+    }
+
+    // Rate limiting: 5 requests per minute per user
+    const rateLimitResult = rateLimit(userId, 5, 60000);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded. Please wait before making another request.',
+          resetTime: rateLimitResult.resetTime
+        },
+        { status: 429 }
       );
     }
 
@@ -40,26 +33,22 @@ export async function POST(request) {
       );
     }
 
-    // Validate API key
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      console.error('OPENAI_API_KEY not configured');
       return NextResponse.json(
         { error: 'AI service not configured' },
         { status: 500 }
       );
     }
 
-    // Build the system message based on type
     let systemMessage = 'You are an expert business consultant and writer. Generate professional, detailed, and actionable business content.';
 
     if (type === 'business-plan') {
-      systemMessage = `You are an expert business consultant specializing in business plan creation. Generate comprehensive, professional business plans with detailed market analysis, financial projections, and strategic recommendations. Structure your response with clear headings and actionable insights.`;
+      systemMessage = 'You are an expert business consultant specializing in business plan creation. Generate comprehensive, professional business plans with detailed market analysis, financial projections, and strategic recommendations. Structure your response with clear headings and actionable insights.';
     } else if (type === 'grant-proposal') {
-      systemMessage = `You are an expert grant writer with extensive experience in securing funding. Create compelling, data-driven grant proposals that demonstrate clear impact, organizational capacity, and project viability. Focus on persuasive language and specific outcomes.`;
+      systemMessage = 'You are an expert grant writer with extensive experience in securing funding. Create compelling, data-driven grant proposals that demonstrate clear impact, organizational capacity, and project viability. Focus on persuasive language and specific outcomes.';
     }
 
-    // Make request to OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -84,9 +73,6 @@ export async function POST(request) {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('OpenAI API error:', errorData);
-
       if (response.status === 429) {
         return NextResponse.json(
           { error: 'Rate limit exceeded. Please wait a moment and try again.' },
@@ -129,7 +115,6 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('AI generation error:', error);
     return NextResponse.json(
       { error: 'Failed to generate content' },
       { status: 500 }
@@ -137,7 +122,6 @@ export async function POST(request) {
   }
 }
 
-// GET endpoint for health check
 export async function GET() {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
@@ -147,6 +131,6 @@ export async function GET() {
 
     return NextResponse.json({ healthy: true, service: 'AI Generation API' });
   } catch (error) {
-    return NextResponse.json({ healthy: false, error: error.message });
+    return NextResponse.json({ healthy: false, error: 'Service unavailable' });
   }
 }

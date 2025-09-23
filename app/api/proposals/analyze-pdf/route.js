@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 // Configure R2 client
 const r2Client = new S3Client({
@@ -17,10 +17,17 @@ const BUCKET_NAME = process.env.R2_BUCKET || 'planpolitai';
 
 export async function POST(request) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     console.log('🔍 PDF Analysis API called');
 
     const { key } = await request.json();
-    const userId = request.headers.get('x-user-id') || 'demo-user';
 
     console.log('📄 Analyzing PDF with key:', key, 'for user:', userId);
 

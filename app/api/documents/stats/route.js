@@ -1,6 +1,20 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key || url === "https://your-project.supabase.co" || key === "your-service-role-key") {
+    return null;
+  }
+
+  return createClient(url, key);
+}
 
 /**
  * Document Statistics API Route
@@ -18,28 +32,34 @@ export async function GET(request) {
       );
     }
 
-    // Get comprehensive document statistics
-    const { data: stats, error } = await supabase
-      .rpc('get_user_document_stats', { p_user_id: userId });
+    const supabase = getSupabaseClient();
+    let stats = null;
+    let recentDocuments = [];
 
-    if (error) {
-      console.error('Stats query error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch statistics' },
-        { status: 500 }
-      );
-    }
+    if (supabase) {
+      // Get comprehensive document statistics
+      const { data: statsData, error } = await supabase
+        .rpc('get_user_document_stats', { p_user_id: userId });
 
-    // Get recent documents
-    const { data: recentDocuments, error: recentError } = await supabase
-      .from('documents')
-      .select('id, original_filename, document_type, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(5);
+      if (error) {
+        console.error('Stats query error:', error);
+      } else {
+        stats = statsData;
+      }
 
-    if (recentError) {
-      console.error('Recent documents query error:', recentError);
+      // Get recent documents
+      const { data: recentData, error: recentError } = await supabase
+        .from('documents')
+        .select('id, original_filename, document_type, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentError) {
+        console.error('Recent documents query error:', recentError);
+      } else {
+        recentDocuments = recentData || [];
+      }
     }
 
     // Parse stats (function returns single row)

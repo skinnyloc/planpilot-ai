@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -7,6 +8,14 @@ const openai = new OpenAI({
 
 export async function POST(request) {
   try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     console.log('🚀 Test API called');
     const body = await request.json();
     console.log('📝 Request body:', JSON.stringify(body, null, 2));

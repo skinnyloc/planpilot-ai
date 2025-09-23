@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Client } from '@paypal/paypal-server-sdk';
 import { LogLevel } from '@paypal/paypal-server-sdk';
-import { auth } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
 // Configure PayPal client for sandbox environment
 const client = new Client({
@@ -21,7 +21,7 @@ const client = new Client({
 export async function POST(request) {
   try {
     // Verify user is authenticated
-    const { userId } = await auth();
+    const { userId } = auth();
     if (!userId) {
       return NextResponse.json(
         { error: 'Authentication required' },
