@@ -1,31 +1,6 @@
-"use client";
-
-import { useAuth } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function HomePage() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.push('/dashboard');
-    }
-  }, [isLoaded, isSignedIn, router]);
-
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (isSignedIn) {
-    return null; // Will redirect to dashboard
-  }
 
   return (
     <div style={{
@@ -57,7 +32,7 @@ export default function HomePage() {
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
           <Link
-            href="/sign-in"
+            href="/dashboard"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -74,10 +49,10 @@ export default function HomePage() {
             onMouseEnter={(e) => e.target.style.backgroundColor = '#d97706'}
             onMouseLeave={(e) => e.target.style.backgroundColor = '#f59e0b'}
           >
-            Sign In
+            Enter Dashboard
           </Link>
           <Link
-            href="/sign-up"
+            href="/business-idea"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -101,7 +76,7 @@ export default function HomePage() {
               e.target.style.color = '#f59e0b';
             }}
           >
-            Sign Up
+            Business Ideas
           </Link>
         </div>
       </div>
