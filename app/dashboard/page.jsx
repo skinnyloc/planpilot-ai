@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Lightbulb, FileText, Send, CreditCard } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -59,7 +59,7 @@ export default function DashboardPage() {
           return (
             <Link
               key={card.title}
-              to={card.href}
+              href={card.href}
               className={`block border rounded-lg p-6 transition-colors ${card.color}`}
             >
               <div className="flex items-start space-x-4">

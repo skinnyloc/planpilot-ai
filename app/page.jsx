@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export default function HomePage() {
   return (
@@ -8,7 +8,7 @@ export default function HomePage() {
           Welcome to PlanPilot AI
         </h1>
         <Link
-          to="/dashboard"
+          href="/dashboard"
           className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
         >
           Go to Dashboard

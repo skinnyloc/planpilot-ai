@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { Check, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import PayPalButton from '@/components/PayPalButton';
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState('monthly');
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSubscriptionSuccess = (data) => {
     console.log('Subscription successful:', data);
@@ -37,7 +37,7 @@ export default function PricingPage() {
       <div className="container mx-auto px-4 py-16">
         {/* Back Button */}
         <button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => router.push('/dashboard')}
           className="flex items-center gap-2 text-gray-400 hover:text-yellow-500 transition-colors mb-8"
         >
           <ArrowLeft className="h-5 w-5" />
