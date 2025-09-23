@@ -137,16 +137,13 @@ export default function MainLayout({ children }) {
         </main>
       </div>
 
-      {/* Mobile sidebar overlay - only show on small screens */}
+      {/* Mobile sidebar overlay - hidden by default since we have persistent sidebar */}
       <div style={{
-        display: sidebarOpen ? 'block' : 'none',
+        display: 'none', // Hidden since we have persistent sidebar
         position: 'fixed',
         inset: 0,
         zIndex: 50,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        '@media (min-width: 1024px)': {
-          display: 'none'
-        }
+        backgroundColor: 'rgba(0, 0, 0, 0.5)'
       }} onClick={() => setSidebarOpen(false)}>
         <div style={{
           position: 'fixed',
