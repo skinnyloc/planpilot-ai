@@ -8,28 +8,28 @@ export default function DashboardPage() {
       description: 'Explore and develop your business concepts',
       href: '/business-idea',
       icon: Lightbulb,
-      color: 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+      color: 'bg-card border-border hover:bg-accent text-card-foreground'
     },
     {
       title: 'Business Plans',
       description: 'Create comprehensive business plans',
       href: '/business-plans',
       icon: FileText,
-      color: 'bg-green-50 border-green-200 hover:bg-green-100'
+      color: 'bg-card border-border hover:bg-accent text-card-foreground'
     },
     {
       title: 'Grant Proposals',
       description: 'Submit and manage grant applications',
       href: '/grant-proposals',
       icon: Send,
-      color: 'bg-purple-50 border-purple-200 hover:bg-purple-100'
+      color: 'bg-card border-border hover:bg-accent text-card-foreground'
     },
     {
       title: 'Credit Guide',
       description: 'Learn about business credit and financing',
       href: '/credit-guide',
       icon: CreditCard,
-      color: 'bg-orange-50 border-orange-200 hover:bg-orange-100'
+      color: 'bg-card border-border hover:bg-accent text-card-foreground'
     }
   ];
 

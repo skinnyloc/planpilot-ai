@@ -33,16 +33,32 @@ export default function DocumentsPage() {
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/documents');
+
+      // Add timeout to prevent infinite loading
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch('/api/documents', {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const data = await response.json();
         setDocuments(data.documents || []);
       } else {
-        throw new Error('Failed to load documents');
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error loading documents:', error);
-      toast.error('Failed to load documents');
+      if (error.name === 'AbortError') {
+        toast.error('Request timed out. Please try again.');
+      } else {
+        toast.error('Failed to load documents. Using offline mode.');
+      }
+      // Set empty array so page shows "no documents" instead of loading forever
+      setDocuments([]);
     } finally {
       setLoading(false);
     }
