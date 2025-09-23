@@ -9,6 +9,10 @@ export default function LayoutWrapper({ children }) {
   const { isSignedIn, isLoaded } = useAuth();
   const pathname = usePathname();
 
+  // Check if Clerk is properly configured
+  const isClerkConfigured = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
+                           process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY !== 'your_clerk_publishable_key_here';
+
   // Don't show loading state, let Clerk handle it
   if (!isLoaded) {
     return (
@@ -33,6 +37,78 @@ export default function LayoutWrapper({ children }) {
             100% { transform: rotate(360deg); }
           }
         `}</style>
+      </div>
+    );
+  }
+
+  // If Clerk is not configured, show setup message
+  if (!isClerkConfigured) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0a0a0a',
+        color: '#fafafa',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ width: '100%', maxWidth: '500px', padding: '40px', textAlign: 'center' }}>
+          <h1 style={{
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            marginBottom: '16px',
+            background: 'linear-gradient(to right, #f59e0b, #fbbf24)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            PlanPilot AI Setup Required
+          </h1>
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            padding: '24px',
+            marginBottom: '24px',
+            textAlign: 'left'
+          }}>
+            <h3 style={{ color: '#f59e0b', marginBottom: '16px', fontSize: '1.1rem' }}>
+              🔧 Clerk Environment Variables Missing
+            </h3>
+            <p style={{ color: '#ccc', marginBottom: '16px', lineHeight: '1.5' }}>
+              Please add these environment variables in your Vercel dashboard:
+            </p>
+            <div style={{
+              backgroundColor: '#0a0a0a',
+              padding: '16px',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontFamily: 'monospace',
+              color: '#fff',
+              border: '1px solid #444'
+            }}>
+              NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...<br/>
+              CLERK_SECRET_KEY=sk_test_...<br/>
+              NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in<br/>
+              NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up<br/>
+              NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard<br/>
+              NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+            </div>
+            <p style={{ color: '#999', fontSize: '14px', marginTop: '12px' }}>
+              Get your keys from: <span style={{ color: '#f59e0b' }}>https://dashboard.clerk.com</span>
+            </p>
+          </div>
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            padding: '16px'
+          }}>
+            <p style={{ color: '#ccc', fontSize: '14px', margin: 0 }}>
+              After adding the environment variables, redeploy your site on Vercel.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
