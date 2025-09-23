@@ -60,126 +60,221 @@ export default function MainLayout({ children }) {
   };
 
   return (
-    <div
-      className="min-h-screen bg-background"
-      style={{
-        backgroundColor: 'var(--background, #0a0a0a)',
-        color: 'var(--foreground, #fafafa)',
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#0a0a0a',
+      color: '#fafafa',
+      display: 'flex'
+    }}>
+      {/* Always visible sidebar */}
+      <div style={{
+        width: '256px',
+        height: '100vh',
+        backgroundColor: '#1a1a1a',
+        borderRight: '1px solid #333',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        zIndex: 40,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {/* Header */}
+        <div style={{
+          height: '64px',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px',
+          borderBottom: '1px solid #333'
+        }}>
+          <h1 style={{
+            fontSize: '1.25rem',
+            fontWeight: 'bold',
+            color: '#fafafa',
+            background: 'linear-gradient(to right, #f59e0b, #fbbf24)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            PlanPilot AI
+          </h1>
+        </div>
+
+        {/* Navigation */}
+        <nav style={{ flex: 1, padding: '16px 12px' }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {getNavigation().map((item) => {
+              const Icon = item.icon;
+              const isActive = currentPath === item.href;
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    onClick={handleNavClick}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s',
+                      backgroundColor: isActive ? '#f59e0b' : 'transparent',
+                      color: isActive ? '#000' : '#fafafa'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isActive) {
+                        e.target.style.backgroundColor = '#333';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isActive) {
+                        e.target.style.backgroundColor = 'transparent';
+                      }
+                    }}
+                  >
+                    <Icon style={{ width: '20px', height: '20px' }} />
+                    {item.name}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </div>
+
+      {/* Main content area */}
+      <div style={{
+        marginLeft: '256px',
+        flex: 1,
         minHeight: '100vh'
-      }}
-    >
-      {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-black/50" onClick={() => setSidebarOpen(false)} />
-        <div
-          className="fixed left-0 top-0 h-full w-64 bg-sidebar-background border-r border-sidebar-border"
-          style={{
-            backgroundColor: 'var(--sidebar-background, #1a1a1a)',
-            borderColor: 'var(--sidebar-border, #333)'
-          }}
-        >
-          <div className="flex h-16 items-center justify-between px-6">
-            <h1 className="text-xl font-bold text-sidebar-foreground">PlanPilot AI</h1>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="rounded-md p-2 hover:bg-sidebar-accent"
-            >
-              <X className="h-5 w-5 text-sidebar-foreground" />
-            </button>
-          </div>
-          <nav className="px-3 py-4">
-            <ul className="space-y-1">
-              {getNavigation().map((item) => {
-                const Icon = item.icon;
-                const isActive = currentPath === item.href;
-                return (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      onClick={handleNavClick}
-                      className={`w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-      </div>
-
-      {/* Desktop sidebar */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:w-64 lg:block">
-        <div
-          className="flex h-full flex-col bg-sidebar-background border-r border-sidebar-border"
-          style={{
-            backgroundColor: 'var(--sidebar-background, #1a1a1a)',
-            borderColor: 'var(--sidebar-border, #333)'
-          }}
-        >
-          <div className="flex h-16 items-center px-6">
-            <h1 className="text-xl font-bold text-sidebar-foreground">PlanPilot AI</h1>
-          </div>
-          <nav className="flex-1 px-3 py-4">
-            <ul className="space-y-1">
-              {getNavigation().map((item) => {
-                const Icon = item.icon;
-                const isActive = currentPath === item.href;
-                return (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      onClick={handleNavClick}
-                      className={`w-full flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      }`}
-                    >
-                      <Icon className="h-5 w-5" />
-                      {item.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div className="lg:pl-64">
-        {/* Top navigation */}
-        <div className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-background px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            className="lg:hidden -m-2.5 p-2.5 text-foreground"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-foreground lg:hidden">PlanPilot AI</h1>
-            </div>
+      }}>
+        {/* Top header */}
+        <div style={{
+          height: '64px',
+          backgroundColor: '#0a0a0a',
+          borderBottom: '1px solid #333',
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30
+        }}>
+          <div style={{ flex: 1 }}>
+            {/* Optional header content */}
           </div>
         </div>
 
         {/* Page content */}
-        <main className="py-10">
-          <div className="px-4 sm:px-6 lg:px-8">
-            {children}
-          </div>
+        <main style={{ padding: '40px 24px' }}>
+          {children}
         </main>
       </div>
 
+      {/* Mobile sidebar overlay - only show on small screens */}
+      <div style={{
+        display: sidebarOpen ? 'block' : 'none',
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        '@media (min-width: 1024px)': {
+          display: 'none'
+        }
+      }} onClick={() => setSidebarOpen(false)}>
+        <div style={{
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          height: '100%',
+          width: '256px',
+          backgroundColor: '#1a1a1a',
+          borderRight: '1px solid #333'
+        }} onClick={(e) => e.stopPropagation()}>
+          <div style={{
+            height: '64px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0 24px'
+          }}>
+            <h1 style={{
+              fontSize: '1.25rem',
+              fontWeight: 'bold',
+              color: '#fafafa'
+            }}>
+              PlanPilot AI
+            </h1>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fafafa',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '6px'
+              }}
+            >
+              <X style={{ width: '20px', height: '20px' }} />
+            </button>
+          </div>
+          <nav style={{ padding: '16px 12px' }}>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {getNavigation().map((item) => {
+                const Icon = item.icon;
+                const isActive = currentPath === item.href;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.href}
+                      onClick={handleNavClick}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '14px',
+                        fontWeight: '500',
+                        textDecoration: 'none',
+                        backgroundColor: isActive ? '#f59e0b' : 'transparent',
+                        color: isActive ? '#000' : '#fafafa'
+                      }}
+                    >
+                      <Icon style={{ width: '20px', height: '20px' }} />
+                      {item.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+      </div>
+
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        style={{
+          position: 'fixed',
+          top: '16px',
+          left: '16px',
+          zIndex: 60,
+          background: '#1a1a1a',
+          border: '1px solid #333',
+          color: '#fafafa',
+          padding: '8px',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          display: 'block'
+        }}
+        className="lg:hidden"
+      >
+        <Menu style={{ width: '24px', height: '24px' }} />
+      </button>
     </div>
   );
 }

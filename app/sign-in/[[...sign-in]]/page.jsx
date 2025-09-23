@@ -2,13 +2,28 @@ import { SignIn } from '@clerk/nextjs';
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: '#0a0a0a',
+      color: '#fafafa',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <div style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            marginBottom: '8px',
+            background: 'linear-gradient(to right, #f59e0b, #fbbf24)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
             Welcome Back
           </h1>
-          <p className="text-muted-foreground">
+          <p style={{ color: '#999', fontSize: '1rem' }}>
             Sign in to your PlanPilot AI account
           </p>
         </div>
@@ -16,16 +31,19 @@ export default function SignInPage() {
           appearance={{
             elements: {
               rootBox: "mx-auto",
-              card: "bg-card border border-border shadow-lg",
-              headerTitle: "text-foreground",
-              headerSubtitle: "text-muted-foreground",
-              socialButtonsBlockButton: "border border-border hover:bg-accent",
-              formFieldInput: "bg-input border border-border text-foreground",
-              formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90",
-              footerActionLink: "text-primary hover:text-primary/80"
+              card: "shadow-lg rounded-lg border",
+              cardBox: "shadow-lg",
+              socialButtonsBlockButton: "border hover:bg-gray-50",
+              formFieldInput: "border rounded-md",
+              formButtonPrimary: "bg-orange-500 hover:bg-orange-600 text-white",
+              footerActionLink: "text-orange-500 hover:text-orange-600"
+            },
+            variables: {
+              colorPrimary: "#f59e0b",
+              colorBackground: "#ffffff",
+              colorText: "#000000"
             }
           }}
-          routing="path"
           path="/sign-in"
           signUpUrl="/sign-up"
           redirectUrl="/dashboard"
