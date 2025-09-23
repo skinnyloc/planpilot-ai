@@ -216,26 +216,6 @@ export default function MainLayout({ children }) {
         </div>
       </div>
 
-      {/* Mobile menu button */}
-      <button
-        onClick={() => setSidebarOpen(true)}
-        style={{
-          position: 'fixed',
-          top: '16px',
-          left: '16px',
-          zIndex: 60,
-          background: '#1a1a1a',
-          border: '1px solid #333',
-          color: '#fafafa',
-          padding: '8px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          display: 'block'
-        }}
-        className="lg:hidden"
-      >
-        <Menu style={{ width: '24px', height: '24px' }} />
-      </button>
     </div>
   );
 }

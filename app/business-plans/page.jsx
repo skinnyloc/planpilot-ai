@@ -93,11 +93,116 @@ ${idea.extra_prompt}` : ''}`;
         if (!generatedPlan) return;
         setIsSaving(true);
 
-        // Simulate save/export - replace with actual functionality
-        setTimeout(() => {
-            alert('Business plan saved and exported successfully!');
+        try {
+            // Generate PDF content for the business plan
+            const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 800
+>>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(${generatedPlan.business_name} - Business Plan) Tj
+0 -30 Td
+/F1 12 Tf
+(Generated on: ${new Date().toLocaleDateString()}) Tj
+0 -40 Td
+(${generatedPlan.content.replace(/[()]/g, '').substring(0, 500)}...) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+0000000274 00000 n
+0000000526 00000 n
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+625
+%%EOF`;
+
+            // Create and download PDF
+            const blob = new Blob([pdfContent], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = window.document.createElement('a');
+            link.href = url;
+            link.download = `${generatedPlan.business_name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_business_plan.pdf`;
+            window.document.body.appendChild(link);
+            link.click();
+            window.document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            // Save business plan to localStorage for grant proposals section
+            const timestamp = Date.now();
+            const random = Math.floor(Math.random() * 10000);
+            const businessPlanData = {
+                id: `${timestamp}_${random}`,
+                business_name: generatedPlan.business_name,
+                content: generatedPlan.content,
+                created_date: new Date().toISOString(),
+                pdf_url: null, // In real app, this would be the uploaded PDF URL
+                generated_from_idea_id: generatedPlan.ideaId
+            };
+
+            // Save to business plans storage
+            const existingPlans = JSON.parse(localStorage.getItem('businessPlans') || '[]');
+            const updatedPlans = [businessPlanData, ...existingPlans];
+            localStorage.setItem('businessPlans', JSON.stringify(updatedPlans));
+
             setIsSaving(false);
-        }, 1000);
+            alert('Business plan downloaded and saved successfully!');
+        } catch (error) {
+            console.error('Save/export error:', error);
+            setIsSaving(false);
+            alert('Error saving business plan. Please try again.');
+        }
     };
 
     const formatMarkdown = (content) => {

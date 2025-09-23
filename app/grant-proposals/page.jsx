@@ -104,40 +104,38 @@ const GrantList = ({ onSelect, selectedGrantId }) => {
 };
 
 export default function GrantProposalsPage() {
-    const [ideas, setIdeas] = useState([]);
-    const [selectedIdea, setSelectedIdea] = useState(null);
+    const [businessPlans, setBusinessPlans] = useState([]);
+    const [selectedBusinessPlan, setSelectedBusinessPlan] = useState(null);
     const [selectedGrant, setSelectedGrant] = useState(null);
-    const [proposalModes, setProposalModes] = useState([]);
+    const [selectedProposalMode, setSelectedProposalMode] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [generatedProposal, setGeneratedProposal] = useState(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const stored = localStorage.getItem('businessIdeas');
+        const stored = localStorage.getItem('businessPlans');
         if (stored) {
-            setIdeas(JSON.parse(stored));
+            setBusinessPlans(JSON.parse(stored));
         }
     }, []);
 
     const MODES = ["Bank", "Investor", "Loan", "Match a Grant"];
 
-    const handleModeChange = (mode, checked) => {
-        setProposalModes(prev =>
-            checked ? [...prev, mode] : prev.filter(m => m !== mode)
-        );
+    const handleModeChange = (mode) => {
+        setSelectedProposalMode(mode);
     };
 
     const handleGenerate = async () => {
         setError('');
-        if (!selectedIdea) {
-            setError('Please select a business idea.');
+        if (!selectedBusinessPlan) {
+            setError('Please select a business plan.');
             return;
         }
-        if (proposalModes.length === 0) {
-            setError('Please select at least one proposal mode.');
+        if (!selectedProposalMode) {
+            setError('Please select a proposal mode.');
             return;
         }
-        if (proposalModes.includes('Match a Grant') && !selectedGrant) {
+        if (selectedProposalMode === 'Match a Grant' && !selectedGrant) {
             setError('Please select a grant for matched mode.');
             return;
         }
@@ -150,42 +148,105 @@ export default function GrantProposalsPage() {
             const proposalContent = `# Grant Proposal
 
 ## Executive Summary
-**Proposal for:** ${selectedIdea.business_name}
-**Proposal Modes:** ${proposalModes.join(', ')}
+**Proposal for:** ${selectedBusinessPlan.business_name}
+**Proposal Mode:** ${selectedProposalMode}
 ${selectedGrant ? `**Targeted Grant:** ${selectedGrant.title}` : ''}
 
-## Business Overview
-${selectedIdea.business_name} is ${selectedIdea.years_in_business > 0 ? `an established business with ${selectedIdea.years_in_business} years` : 'a new venture'} focused on ${selectedIdea.problem_solved || 'solving key market challenges'}.
+## Business Plan Overview
+This grant proposal is based on our comprehensive business plan for ${selectedBusinessPlan.business_name}, which outlines our strategic vision and implementation roadmap.
 
-## Problem Statement
-The primary challenge we address is: ${selectedIdea.problem_solved || 'significant market gaps that need innovative solutions'}.
+## Business Plan Content
+${selectedBusinessPlan.content}
 
-## Proposed Solution
-Our approach leverages ${selectedIdea.competitive_advantage || 'our unique capabilities and market understanding'} to deliver exceptional value.
-
-## Market Opportunity
-Target Market: ${selectedIdea.target_market || 'We serve a diverse customer base with varying needs and preferences.'}
-
-## Financial Requirements
-Startup Costs: $${selectedIdea.startup_costs || '50,000'}
-Revenue Model: ${selectedIdea.revenue_model || 'Multiple revenue streams designed for sustainability and growth.'}
-
-## Implementation Plan
-Business Goals: ${selectedIdea.business_goals || 'Our primary objectives include sustainable growth, market expansion, and customer satisfaction.'}
-
-${proposalModes.includes('Match a Grant') && selectedGrant ? `
+${selectedProposalMode === 'Match a Grant' && selectedGrant ? `
 
 ## Grant Alignment
 This proposal specifically addresses the requirements of the ${selectedGrant.title} from ${selectedGrant.sponsor}. We are requesting funding in the range of $${selectedGrant.award_min?.toLocaleString()} - $${selectedGrant.award_max?.toLocaleString()}.` : ''}
 
-${selectedIdea.extra_prompt ? `
+## Funding Request
+Based on our detailed business plan analysis, we are seeking ${selectedProposalMode.toLowerCase()} funding to support the implementation and growth phases of ${selectedBusinessPlan.business_name}.`;
 
-## Additional Considerations
-${selectedIdea.extra_prompt}` : ''}`;
+            // Generate PDF content for the grant proposal
+            const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 800
+>>
+stream
+BT
+/F1 16 Tf
+50 750 Td
+(${selectedBusinessPlan.business_name} - Grant Proposal) Tj
+0 -30 Td
+/F1 12 Tf
+(Generated on: ${new Date().toLocaleDateString()}) Tj
+0 -30 Td
+(Proposal Mode: ${selectedProposalMode}) Tj
+0 -40 Td
+(${proposalContent.replace(/[()]/g, '').substring(0, 400)}...) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+0000000274 00000 n
+0000000526 00000 n
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+625
+%%EOF`;
 
             setGeneratedProposal({
                 content: proposalContent,
-                pdf_url: '#'
+                pdfContent: pdfContent,
+                businessName: selectedBusinessPlan.business_name,
+                proposalMode: selectedProposalMode
             });
             setIsGenerating(false);
         }, 2000);
@@ -203,7 +264,7 @@ ${selectedIdea.extra_prompt}` : ''}`;
             .replace(/h[1-3]><\/p>/g, '>');
     };
 
-    const isGenerateDisabled = !selectedIdea || proposalModes.length === 0 || (proposalModes.includes('Match a Grant') && !selectedGrant) || isGenerating;
+    const isGenerateDisabled = !selectedBusinessPlan || !selectedProposalMode || (selectedProposalMode === 'Match a Grant' && !selectedGrant) || isGenerating;
 
     return (
         <div style={{ padding: '32px' }}>
@@ -241,11 +302,11 @@ ${selectedIdea.extra_prompt}` : ''}`;
                             color: '#fafafa',
                             marginBottom: '16px'
                         }}>
-                            1. Select Business Idea
+                            1. Select Business Plan
                         </h3>
                         <select
-                            value={selectedIdea?.id || ''}
-                            onChange={(e) => setSelectedIdea(ideas.find(i => i.id === e.target.value))}
+                            value={selectedBusinessPlan?.id || ''}
+                            onChange={(e) => setSelectedBusinessPlan(businessPlans.find(p => p.id === e.target.value))}
                             style={{
                                 width: '100%',
                                 padding: '12px',
@@ -257,10 +318,10 @@ ${selectedIdea.extra_prompt}` : ''}`;
                                 outline: 'none'
                             }}
                         >
-                            <option value="">Choose a business...</option>
-                            {ideas.map(idea => (
-                                <option key={idea.id} value={idea.id}>
-                                    {idea.business_name}
+                            <option value="">Choose a business plan...</option>
+                            {businessPlans.map(plan => (
+                                <option key={plan.id} value={plan.id}>
+                                    {plan.business_name}
                                 </option>
                             ))}
                         </select>
@@ -294,9 +355,11 @@ ${selectedIdea.extra_prompt}` : ''}`;
                                     }}
                                 >
                                     <input
-                                        type="checkbox"
-                                        checked={proposalModes.includes(mode)}
-                                        onChange={(e) => handleModeChange(mode, e.target.checked)}
+                                        type="radio"
+                                        name="proposalMode"
+                                        value={mode}
+                                        checked={selectedProposalMode === mode}
+                                        onChange={() => handleModeChange(mode)}
                                         style={{
                                             width: '16px',
                                             height: '16px',
@@ -310,7 +373,7 @@ ${selectedIdea.extra_prompt}` : ''}`;
                     </div>
 
                     {/* Grant Selection (conditional) */}
-                    {proposalModes.includes('Match a Grant') && (
+                    {selectedProposalMode === 'Match a Grant' && (
                         <div style={{
                             backgroundColor: '#000',
                             border: '1px solid #f59e0b',
@@ -412,10 +475,20 @@ ${selectedIdea.extra_prompt}` : ''}`;
                                 }}>
                                     Generated Proposal
                                 </h3>
-                                <a
-                                    href={generatedProposal.pdf_url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <button
+                                    onClick={() => {
+                                        if (generatedProposal.pdfContent) {
+                                            const blob = new Blob([generatedProposal.pdfContent], { type: 'application/pdf' });
+                                            const url = window.URL.createObjectURL(blob);
+                                            const link = window.document.createElement('a');
+                                            link.href = url;
+                                            link.download = `${generatedProposal.businessName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_grant_proposal_${generatedProposal.proposalMode.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                                            window.document.body.appendChild(link);
+                                            link.click();
+                                            window.document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                        }
+                                    }}
                                     style={{
                                         backgroundColor: '#f59e0b',
                                         color: '#000',
@@ -424,7 +497,7 @@ ${selectedIdea.extra_prompt}` : ''}`;
                                         padding: '8px 16px',
                                         fontSize: '14px',
                                         fontWeight: '600',
-                                        textDecoration: 'none',
+                                        cursor: 'pointer',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '6px'
@@ -432,7 +505,7 @@ ${selectedIdea.extra_prompt}` : ''}`;
                                 >
                                     <Download style={{ width: '14px', height: '14px' }} />
                                     Download PDF
-                                </a>
+                                </button>
                             </div>
                             <div
                                 style={{
