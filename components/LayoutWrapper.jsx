@@ -11,13 +11,37 @@ function SimpleAuthForm() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // For demo purposes, any email/password will work
     if (email && password) {
+      // Save user profile data during sign up
+      if (isSignUp) {
+        const profileData = {
+          email,
+          firstName,
+          lastName,
+          username: ''
+        };
+        localStorage.setItem('demoProfile', JSON.stringify(profileData));
+      } else {
+        // For sign in, check if profile exists, if not create basic one
+        const existingProfile = localStorage.getItem('demoProfile');
+        if (!existingProfile) {
+          const profileData = {
+            email,
+            firstName: '',
+            lastName: '',
+            username: ''
+          };
+          localStorage.setItem('demoProfile', JSON.stringify(profileData));
+        }
+      }
+
       setIsAuthenticated(true);
       localStorage.setItem('demoAuth', 'true');
     }
@@ -62,26 +86,50 @@ function SimpleAuthForm() {
         }}>
           <form onSubmit={handleSubmit}>
             {isSignUp && (
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', color: '#ccc' }}>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px'
-                  }}
-                  placeholder="Enter your full name"
-                />
-              </div>
+              <>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', color: '#ccc' }}>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #444',
+                      borderRadius: '6px',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Enter your first name"
+                  />
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '14px', color: '#ccc' }}>
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #444',
+                      borderRadius: '6px',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Enter your last name"
+                  />
+                </div>
+              </>
             )}
 
             <div style={{ marginBottom: '16px' }}>
@@ -190,16 +238,31 @@ function DemoDashboard() {
           { title: 'Grant Proposals', desc: 'Submit applications', href: '/grant-proposals' },
           { title: 'Documents', desc: 'Manage your files', href: '/documents' }
         ].map((item) => (
-          <div key={item.title} style={{
-            backgroundColor: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '8px',
-            padding: '20px',
-            cursor: 'pointer'
-          }}>
-            <h3 style={{ color: '#f59e0b', marginBottom: '8px' }}>{item.title}</h3>
-            <p style={{ color: '#ccc', fontSize: '14px' }}>{item.desc}</p>
-          </div>
+          <a
+            key={item.title}
+            href={item.href}
+            style={{
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: '8px',
+              padding: '20px',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              display: 'block',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#333';
+              e.target.style.borderColor = '#f59e0b';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#1a1a1a';
+              e.target.style.borderColor = '#333';
+            }}
+          >
+            <h3 style={{ color: '#f59e0b', marginBottom: '8px', margin: '0 0 8px' }}>{item.title}</h3>
+            <p style={{ color: '#ccc', fontSize: '14px', margin: 0 }}>{item.desc}</p>
+          </a>
         ))}
       </div>
     </div>

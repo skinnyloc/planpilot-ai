@@ -150,23 +150,6 @@ export default function MainLayout({ children }) {
         flex: 1,
         minHeight: '100vh'
       }}>
-        {/* Top header */}
-        <div style={{
-          height: '64px',
-          backgroundColor: '#0a0a0a',
-          borderBottom: '1px solid #333',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px',
-          position: 'sticky',
-          top: 0,
-          zIndex: 30
-        }}>
-          <div style={{ flex: 1 }}>
-            {/* Optional header content */}
-          </div>
-        </div>
-
         {/* Page content */}
         <main style={{ padding: '40px 24px' }}>
           {children}

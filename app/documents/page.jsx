@@ -1,23 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, Download, Mail, Search, Filter, Calendar, Tag, Trash2, Eye } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
-import { canAccessFeature } from '@/lib/utils/planChecker';
-import UpgradePrompt from '@/components/UpgradePrompt';
-import { toast } from 'sonner';
+import { FileText, Download, Mail, Search, Filter, Calendar, Tag, Trash2, Eye, Lightbulb, Folder } from 'lucide-react';
 
 export default function DocumentsPage() {
-  const { user } = useUser();
-  const canAccessDocuments = canAccessFeature(user, 'document-management');
-
+  const [businessIdeas, setBusinessIdeas] = useState([]);
   const [documents, setDocuments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
 
   const documentTypes = [
     { value: 'all', label: 'All Documents' },
+    { value: 'business_ideas', label: 'Business Ideas' },
     { value: 'business_plan', label: 'Business Plans' },
     { value: 'letter', label: 'Letters' },
     { value: 'proposal', label: 'Proposals' },
@@ -25,42 +20,13 @@ export default function DocumentsPage() {
   ];
 
   useEffect(() => {
-    if (user) {
-      loadDocuments();
-    }
-  }, [user]);
+    loadBusinessIdeas();
+  }, []);
 
-  const loadDocuments = async () => {
-    try {
-      setLoading(true);
-
-      // Add timeout to prevent infinite loading
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-      const response = await fetch('/api/documents', {
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(data.documents || []);
-      } else {
-        throw new Error(`API error: ${response.status} ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error loading documents:', error);
-      if (error.name === 'AbortError') {
-        toast.error('Request timed out. Please try again.');
-      } else {
-        toast.error('Failed to load documents. Using offline mode.');
-      }
-      // Set empty array so page shows "no documents" instead of loading forever
-      setDocuments([]);
-    } finally {
-      setLoading(false);
+  const loadBusinessIdeas = () => {
+    const stored = localStorage.getItem('businessIdeas');
+    if (stored) {
+      setBusinessIdeas(JSON.parse(stored));
     }
   };
 
@@ -133,6 +99,13 @@ export default function DocumentsPage() {
     }
   };
 
+  const filteredBusinessIdeas = businessIdeas.filter(idea => {
+    const matchesSearch = !searchTerm ||
+      idea.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      idea.problemSolved.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = !searchTerm ||
       doc.title.toLowerCase().includes(searchTerm.toLowerCase());
@@ -142,15 +115,17 @@ export default function DocumentsPage() {
 
   const getDocumentIcon = (type) => {
     switch (type) {
+      case 'business_ideas':
+        return <Lightbulb style={{ width: '20px', height: '20px', color: '#f59e0b' }} />;
       case 'business_plan':
-        return <FileText className="h-5 w-5 text-blue-600" />;
+        return <FileText style={{ width: '20px', height: '20px', color: '#3b82f6' }} />;
       case 'letter':
-        return <Mail className="h-5 w-5 text-green-600" />;
+        return <Mail style={{ width: '20px', height: '20px', color: '#10b981' }} />;
       case 'proposal':
       case 'grant_proposal':
-        return <FileText className="h-5 w-5 text-purple-600" />;
+        return <FileText style={{ width: '20px', height: '20px', color: '#8b5cf6' }} />;
       default:
-        return <FileText className="h-5 w-5 text-gray-600" />;
+        return <FileText style={{ width: '20px', height: '20px', color: '#6b7280' }} />;
     }
   };
 
@@ -159,165 +134,499 @@ export default function DocumentsPage() {
     return typeObj ? typeObj.label : type;
   };
 
-  if (!canAccessDocuments) {
-    return <UpgradePrompt feature="Document Management" />;
-  }
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-4">Documents</h1>
-        <p className="text-muted-foreground">
-          Manage your generated business plans, letters, and proposals.
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          color: '#fafafa',
+          marginBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <Folder style={{ color: '#f59e0b' }} />
+          Documents
+        </h1>
+        <p style={{ color: '#999', fontSize: '1rem' }}>
+          Manage your business ideas, plans, letters, and proposals.
         </p>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+      <div style={{
+        marginBottom: '24px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
         {/* Search */}
-        <div className="relative flex-1">
-          <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search style={{
+            width: '16px',
+            height: '16px',
+            position: 'absolute',
+            left: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#999'
+          }} />
           <input
             type="text"
             placeholder="Search documents..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-background text-foreground"
+            style={{
+              width: '100%',
+              paddingLeft: '40px',
+              paddingRight: '16px',
+              paddingTop: '12px',
+              paddingBottom: '12px',
+              border: '1px solid #444',
+              borderRadius: '8px',
+              backgroundColor: '#333',
+              color: '#fff',
+              fontSize: '14px'
+            }}
           />
         </div>
 
         {/* Type Filter */}
-        <div className="relative">
+        <div style={{ position: 'relative', width: 'fit-content' }}>
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
-            className="appearance-none bg-background border border-border rounded-lg px-4 py-2 pr-8 text-foreground cursor-pointer"
+            style={{
+              appearance: 'none',
+              backgroundColor: '#333',
+              border: '1px solid #444',
+              borderRadius: '8px',
+              padding: '12px 40px 12px 16px',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
           >
             {documentTypes.map((type) => (
-              <option key={type.value} value={type.value}>
+              <option key={type.value} value={type.value} style={{ backgroundColor: '#333', color: '#fff' }}>
                 {type.label}
               </option>
             ))}
           </select>
-          <Filter className="h-4 w-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Filter style={{
+            width: '16px',
+            height: '16px',
+            position: 'absolute',
+            right: '12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#999',
+            pointerEvents: 'none'
+          }} />
         </div>
       </div>
 
-      {/* Documents List */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading documents...</p>
-        </div>
-      ) : filteredDocuments.length === 0 ? (
-        <div className="text-center py-12">
-          <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            {searchTerm || selectedType !== 'all' ? 'No documents found' : 'No documents yet'}
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            {searchTerm || selectedType !== 'all'
-              ? 'Try adjusting your search or filter criteria.'
-              : 'Create your first business plan or generate a proposal to get started.'
-            }
-          </p>
-          {(!searchTerm && selectedType === 'all') && (
-            <div className="flex gap-4 justify-center">
-              <a
-                href="/business-idea"
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Create Business Plan
-              </a>
-              <a
-                href="/grant-proposals"
-                className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted transition-colors"
-              >
-                Generate Proposal
-              </a>
+      {/* Business Ideas Folder */}
+      {(selectedType === 'all' || selectedType === 'business_ideas') && (
+        <div style={{
+          backgroundColor: '#1a1a1a',
+          border: '1px solid #333',
+          borderRadius: '8px',
+          padding: '24px',
+          marginBottom: '24px'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            marginBottom: '20px'
+          }}>
+            <Folder style={{ color: '#f59e0b', width: '24px', height: '24px' }} />
+            <h2 style={{
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              color: '#fafafa',
+              margin: 0
+            }}>
+              Business Ideas ({businessIdeas.length})
+            </h2>
+          </div>
+
+          {filteredBusinessIdeas.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '32px 16px',
+              color: '#999'
+            }}>
+              <Lightbulb style={{
+                width: '48px',
+                height: '48px',
+                margin: '0 auto 16px',
+                color: '#555'
+              }} />
+              <p style={{ margin: 0, fontSize: '14px' }}>
+                {searchTerm ? 'No business ideas match your search' : 'No business ideas saved yet'}
+              </p>
+              <p style={{ margin: '4px 0 16px', fontSize: '12px' }}>
+                {searchTerm ? 'Try a different search term' : 'Create your first business idea to get started'}
+              </p>
+              {!searchTerm && (
+                <a
+                  href="/business-idea"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: '#f59e0b',
+                    color: '#000',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    textDecoration: 'none',
+                    fontSize: '14px',
+                    fontWeight: '600'
+                  }}
+                >
+                  <Lightbulb size={16} />
+                  Create Business Idea
+                </a>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {filteredBusinessIdeas.map((idea) => (
+                <div
+                  key={idea.id}
+                  style={{
+                    backgroundColor: '#333',
+                    border: '1px solid #444',
+                    borderRadius: '8px',
+                    padding: '16px'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'start',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '8px'
+                      }}>
+                        <Lightbulb style={{ color: '#f59e0b', width: '20px', height: '20px' }} />
+                        <h3 style={{
+                          fontSize: '16px',
+                          fontWeight: '600',
+                          color: '#fafafa',
+                          margin: 0
+                        }}>
+                          {idea.businessName}
+                        </h3>
+                        <span style={{
+                          padding: '2px 8px',
+                          backgroundColor: '#f59e0b',
+                          color: '#000',
+                          fontSize: '11px',
+                          borderRadius: '12px',
+                          fontWeight: '500'
+                        }}>
+                          Business Idea
+                        </span>
+                      </div>
+
+                      {idea.problemSolved && (
+                        <p style={{
+                          fontSize: '14px',
+                          color: '#ccc',
+                          margin: '0 0 12px',
+                          lineHeight: '1.4'
+                        }}>
+                          {idea.problemSolved}
+                        </p>
+                      )}
+
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        fontSize: '12px',
+                        color: '#999'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar style={{ width: '12px', height: '12px' }} />
+                          {idea.createdAt}
+                        </div>
+                        {idea.targetMarket && (
+                          <div>
+                            Target: {idea.targetMarket.slice(0, 50)}...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '16px' }}>
+                      <a
+                        href="/business-idea"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          backgroundColor: '#f59e0b',
+                          color: '#000',
+                          borderRadius: '6px',
+                          textDecoration: 'none',
+                          fontWeight: '500'
+                        }}
+                        title="View/Edit"
+                      >
+                        <Eye style={{ width: '12px', height: '12px' }} />
+                        View
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
-      ) : (
-        <div className="grid gap-4">
-          {filteredDocuments.map((document) => (
-            <div
-              key={document.id}
-              className="bg-card border border-border rounded-lg p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    {getDocumentIcon(document.document_type)}
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {document.title}
-                    </h3>
-                    <span className="px-2 py-1 bg-muted text-muted-foreground text-xs rounded-full">
-                      {getDocumentTypeLabel(document.document_type)}
-                    </span>
-                  </div>
+      )}
 
-                  {document.description && (
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {document.description}
-                    </p>
-                  )}
-
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(document.created_at).toLocaleDateString()}
-                    </div>
-                    {document.file_size && (
-                      <div>
-                        Size: {(document.file_size / 1024).toFixed(1)} KB
-                      </div>
-                    )}
-                  </div>
+      {/* Other Documents */}
+      {(selectedType === 'all' || selectedType !== 'business_ideas') && (
+        <>
+          {filteredDocuments.length === 0 && selectedType !== 'business_ideas' ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '48px 16px',
+              backgroundColor: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: '8px'
+            }}>
+              <FileText style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 16px',
+                color: '#555'
+              }} />
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '500',
+                color: '#fafafa',
+                margin: '0 0 8px'
+              }}>
+                {searchTerm || selectedType !== 'all' ? 'No documents found' : 'No documents yet'}
+              </h3>
+              <p style={{
+                color: '#999',
+                margin: '0 0 24px',
+                fontSize: '14px'
+              }}>
+                {searchTerm || selectedType !== 'all'
+                  ? 'Try adjusting your search or filter criteria.'
+                  : 'Create your first business plan or generate a proposal to get started.'
+                }
+              </p>
+              {(!searchTerm && selectedType === 'all') && (
+                <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                  <a
+                    href="/business-idea"
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: '#f59e0b',
+                      color: '#000',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Create Business Plan
+                  </a>
+                  <a
+                    href="/grant-proposals"
+                    style={{
+                      padding: '8px 16px',
+                      border: '1px solid #444',
+                      color: '#fafafa',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '14px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    Generate Proposal
+                  </a>
                 </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => handleDownload(document)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                    title="Download"
-                  >
-                    <Download className="h-3 w-3" />
-                    Download
-                  </button>
-                  <button
-                    onClick={() => handleEmail(document)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
-                    title="Email"
-                  >
-                    <Mail className="h-3 w-3" />
-                    Email
-                  </button>
-                  <button
-                    onClick={() => handleDelete(document)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    Delete
-                  </button>
-                </div>
-              </div>
+              )}
             </div>
-          ))}
-        </div>
+          ) : (
+            <div style={{ display: 'grid', gap: '16px' }}>
+              {filteredDocuments.map((document) => (
+                <div
+                  key={document.id}
+                  style={{
+                    backgroundColor: '#1a1a1a',
+                    border: '1px solid #333',
+                    borderRadius: '8px',
+                    padding: '24px'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'start',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '8px'
+                      }}>
+                        {getDocumentIcon(document.document_type)}
+                        <h3 style={{
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#fafafa',
+                          margin: 0
+                        }}>
+                          {document.title}
+                        </h3>
+                        <span style={{
+                          padding: '2px 8px',
+                          backgroundColor: '#333',
+                          color: '#ccc',
+                          fontSize: '11px',
+                          borderRadius: '12px'
+                        }}>
+                          {getDocumentTypeLabel(document.document_type)}
+                        </span>
+                      </div>
+
+                      {document.description && (
+                        <p style={{
+                          fontSize: '14px',
+                          color: '#999',
+                          margin: '0 0 12px'
+                        }}>
+                          {document.description}
+                        </p>
+                      )}
+
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        fontSize: '12px',
+                        color: '#666'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Calendar style={{ width: '12px', height: '12px' }} />
+                          {new Date(document.created_at).toLocaleDateString()}
+                        </div>
+                        {document.file_size && (
+                          <div>
+                            Size: {(document.file_size / 1024).toFixed(1)} KB
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '16px' }}>
+                      <button
+                        onClick={() => handleDownload(document)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          backgroundColor: '#f59e0b',
+                          color: '#000',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                        title="Download"
+                      >
+                        <Download style={{ width: '12px', height: '12px' }} />
+                        Download
+                      </button>
+                      <button
+                        onClick={() => handleEmail(document)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          backgroundColor: '#333',
+                          color: '#ccc',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                        title="Email"
+                      >
+                        <Mail style={{ width: '12px', height: '12px' }} />
+                        Email
+                      </button>
+                      <button
+                        onClick={() => handleDelete(document)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          backgroundColor: '#dc2626',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                        title="Delete"
+                      >
+                        <Trash2 style={{ width: '12px', height: '12px' }} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Stats */}
-      {documents.length > 0 && (
-        <div className="mt-8 p-4 bg-muted/50 rounded-lg">
-          <div className="flex justify-between items-center text-sm text-muted-foreground">
+      {(businessIdeas.length > 0 || documents.length > 0) && (
+        <div style={{
+          marginTop: '32px',
+          padding: '16px',
+          backgroundColor: 'rgba(51, 51, 51, 0.5)',
+          borderRadius: '8px'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontSize: '14px',
+            color: '#999'
+          }}>
             <span>
-              Showing {filteredDocuments.length} of {documents.length} documents
+              {businessIdeas.length} business ideas, {documents.length} other documents
             </span>
             <span>
-              Total storage: {((documents.reduce((acc, doc) => acc + (doc.file_size || 0), 0)) / 1024 / 1024).toFixed(2)} MB
+              Total items: {businessIdeas.length + documents.length}
             </span>
           </div>
         </div>

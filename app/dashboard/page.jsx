@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Lightbulb, FileText, Send, CreditCard } from 'lucide-react';
+import { Lightbulb, FileText, Send, File, Home } from 'lucide-react';
 
 export default function DashboardPage() {
   const actionCards = [
@@ -7,73 +7,113 @@ export default function DashboardPage() {
       title: 'Business Ideas',
       description: 'Explore and develop your business concepts',
       href: '/business-idea',
-      icon: Lightbulb,
-      color: 'bg-card border-border hover:bg-accent text-card-foreground'
+      icon: Lightbulb
     },
     {
       title: 'Business Plans',
       description: 'Create comprehensive business plans',
       href: '/business-plans',
-      icon: FileText,
-      color: 'bg-card border-border hover:bg-accent text-card-foreground'
+      icon: FileText
     },
     {
       title: 'Grant Proposals',
       description: 'Submit and manage grant applications',
       href: '/grant-proposals',
-      icon: Send,
-      color: 'bg-card border-border hover:bg-accent text-card-foreground'
+      icon: Send
     },
     {
-      title: 'Credit Guide',
-      description: 'Learn about business credit and financing',
-      href: '/credit-guide',
-      icon: CreditCard,
-      color: 'bg-card border-border hover:bg-accent text-card-foreground'
+      title: 'Documents',
+      description: 'Manage your files and documents',
+      href: '/documents',
+      icon: File
     }
   ];
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: 'grid', gap: '32px' }}>
       {/* Welcome Card */}
-      <div className="bg-card border border-border rounded-lg p-6 shadow-sm">
-        <h1 className="text-3xl font-bold text-card-foreground mb-2">
+      <div style={{
+        backgroundColor: '#1a1a1a',
+        border: '1px solid #333',
+        borderRadius: '8px',
+        padding: '24px'
+      }}>
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          color: '#fafafa',
+          marginBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <Home style={{ color: '#f59e0b' }} />
           Welcome to Your Business Hub
         </h1>
-        <p className="text-muted-foreground">
+        <p style={{ color: '#999', fontSize: '1rem', margin: 0 }}>
           Manage your business ideas, plans, and funding opportunities all in one place.
         </p>
       </div>
 
-      {/* Summary Area */}
-      <div className="bg-muted/50 border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground">
-          You have <span className="font-semibold text-foreground">3</span> business ideas
-        </p>
-      </div>
-
       {/* Action Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '24px'
+      }}>
         {actionCards.map((card) => {
           const Icon = card.icon;
           return (
             <Link
               key={card.title}
               href={card.href}
-              className={`block border rounded-lg p-6 transition-colors ${card.color}`}
+              style={{
+                display: 'block',
+                backgroundColor: '#1a1a1a',
+                border: '1px solid #333',
+                borderRadius: '8px',
+                padding: '24px',
+                textDecoration: 'none',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#333';
+                e.target.style.borderColor = '#f59e0b';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#1a1a1a';
+                e.target.style.borderColor = '#333';
+              }}
             >
-              <div className="flex items-start space-x-4">
-                <div className="flex-shrink-0">
-                  <Icon className="h-8 w-8 text-primary" />
+              <div style={{ display: 'flex', alignItems: 'start', gap: '16px' }}>
+                <div style={{ flexShrink: 0 }}>
+                  <Icon style={{ width: '32px', height: '32px', color: '#f59e0b' }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{
+                    fontSize: '1.125rem',
+                    fontWeight: '600',
+                    color: '#fafafa',
+                    marginBottom: '8px',
+                    margin: '0 0 8px'
+                  }}>
                     {card.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#999',
+                    marginBottom: '16px',
+                    margin: '0 0 16px'
+                  }}>
                     {card.description}
                   </p>
-                  <div className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80">
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#f59e0b'
+                  }}>
                     Get Started →
                   </div>
                 </div>

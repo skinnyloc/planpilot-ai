@@ -2,13 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { User, Mail, Save, RotateCcw, Lock, Crown, Calendar, Activity, AlertCircle, CheckCircle } from 'lucide-react';
-import { useUser } from '@clerk/nextjs';
-import { getUserProfile, saveUserProfile } from '@/lib/services/profileService';
-import { isProUser, getUserPlan } from '@/lib/utils/planChecker';
-import UpgradePrompt from '@/components/UpgradePrompt';
 
 export default function ProfilePage() {
-  const { user, isLoaded } = useUser();
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -31,49 +26,23 @@ export default function ProfilePage() {
 
   // Load user data on component mount
   useEffect(() => {
-    if (isLoaded && user) {
-      loadUserProfile();
-    }
-  }, [isLoaded, user]);
+    loadUserProfile();
+  }, []);
 
-  const loadUserProfile = async () => {
-    if (!user) return;
-
+  const loadUserProfile = () => {
     setIsLoading(true);
     try {
-      // Load data from Clerk
-      const userData = {
-        email: user.emailAddresses?.[0]?.emailAddress || '',
-        firstName: user.firstName || '',
-        lastName: user.lastName || ''
+      const stored = localStorage.getItem('demoProfile');
+      const userData = stored ? JSON.parse(stored) : {
+        email: 'demo@planpilotai.com',
+        firstName: '',
+        lastName: '',
+        username: ''
       };
 
-      // Load additional data from Supabase using service
-      const profileResult = await getUserProfile(user.id);
-
-      if (!profileResult.success && profileResult.error) {
-        console.error('Error loading profile:', profileResult.error);
-        setMessage({
-          type: 'warning',
-          text: 'Profile data could not be loaded from database. Using Clerk data only.'
-        });
-      }
-
-      const profile = profileResult.profile;
-      const combinedData = {
-        email: userData.email,
-        firstName: profile?.first_name || userData.firstName || '',
-        lastName: profile?.last_name || userData.lastName || '',
-        username: profile?.username || ''
-      };
-
-      console.log('Loading profile - userData:', userData);
-      console.log('Loading profile - profile from DB:', profile);
-      console.log('Loading profile - combinedData:', combinedData);
-
-      setFormData(combinedData);
-      setOriginalData(combinedData);
-      setProfileData(profile);
+      setFormData(userData);
+      setOriginalData(userData);
+      setProfileData({ plan: 'free' });
     } catch (error) {
       console.error('Error loading user profile:', error);
       setMessage({
@@ -125,32 +94,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSave = async () => {
-    // Remove validation requirement - allow saving individual fields
+  const handleSave = () => {
     setIsSaving(true);
     setMessage({ type: '', text: '' });
 
     try {
-      console.log('Saving profile data:', formData);
-
-      // Skip Clerk update for now - save directly to Supabase
-      // TODO: Fix Clerk firstName/lastName support later
-
-      // Update or create Supabase profile using service
-      const saveResult = await saveUserProfile(user.id, {
-        email: formData.email,
-        username: formData.username,
-        firstName: formData.firstName,
-        lastName: formData.lastName
-      });
-
-      if (!saveResult.success) {
-        throw new Error(saveResult.error || 'Failed to save profile to database');
-      }
-
+      localStorage.setItem('demoProfile', JSON.stringify(formData));
       setOriginalData({ ...formData });
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
-      setProfileData(saveResult.profile);
 
       // Clear message after 3 seconds
       setTimeout(() => setMessage({ type: '', text: '' }), 3000);
@@ -158,7 +109,7 @@ export default function ProfilePage() {
       console.error('Error saving profile:', error);
       setMessage({
         type: 'error',
-        text: error.message || 'Failed to save profile. Please try again.'
+        text: 'Failed to save profile. Please try again.'
       });
     } finally {
       setIsSaving(false);
@@ -171,7 +122,7 @@ export default function ProfilePage() {
     setMessage({ type: '', text: '' });
   };
 
-  const handlePasswordChange = async () => {
+  const handlePasswordChange = () => {
     if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
       setMessage({ type: 'error', text: 'Please fill in all password fields' });
       return;
@@ -190,378 +141,735 @@ export default function ProfilePage() {
     setIsChangingPassword(true);
     setMessage({ type: '', text: '' });
 
-    try {
-      await user.updatePassword({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword
-      });
-
+    setTimeout(() => {
       setMessage({ type: 'success', text: 'Password changed successfully!' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setShowPasswordForm(false);
-    } catch (error) {
-      console.error('Error changing password:', error);
-      setMessage({
-        type: 'error',
-        text: error.errors?.[0]?.message || 'Failed to change password. Please check your current password.'
-      });
-    } finally {
       setIsChangingPassword(false);
-    }
+    }, 1000);
   };
 
   const hasChanges = () => {
     return JSON.stringify(formData) !== JSON.stringify(originalData);
   };
 
-  if (!isLoaded || isLoading) {
+  if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded-md mb-2"></div>
-          <div className="h-4 bg-muted rounded-md w-3/4"></div>
-        </div>
-        <div className="bg-card border border-border rounded-lg p-8 animate-pulse">
-          <div className="space-y-4">
-            <div className="h-4 bg-muted rounded-md"></div>
-            <div className="h-10 bg-muted rounded-md"></div>
-            <div className="h-4 bg-muted rounded-md"></div>
-            <div className="h-10 bg-muted rounded-md"></div>
-          </div>
-        </div>
+      <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          border: '2px solid #f59e0b',
+          borderTop: '2px solid transparent',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto'
+        }}></div>
       </div>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center py-12">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">Please sign in to view your profile.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const userPlan = getUserPlan(user);
-  const isPro = isProUser(user);
+  const isPro = false;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Profile Settings</h1>
-        <p className="text-muted-foreground">
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          color: '#fafafa',
+          marginBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <User style={{ color: '#f59e0b' }} />
+          Profile Settings
+        </h1>
+        <p style={{ color: '#999', fontSize: '1rem' }}>
           Manage your account information and preferences.
         </p>
       </div>
 
       {/* Message Display */}
       {message.text && (
-        <div className={`p-4 rounded-lg border flex items-center gap-2 ${
-          message.type === 'success'
-            ? 'bg-green-50 border-green-200 text-green-800'
-            : message.type === 'warning'
-            ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
-            : 'bg-red-50 border-red-200 text-red-800'
-        }`}>
+        <div style={{
+          padding: '16px',
+          borderRadius: '8px',
+          border: `1px solid ${message.type === 'success' ? '#10b981' : message.type === 'warning' ? '#f59e0b' : '#ef4444'}`,
+          backgroundColor: message.type === 'success' ? '#064e3b' : message.type === 'warning' ? '#451a03' : '#7f1d1d',
+          color: message.type === 'success' ? '#10b981' : message.type === 'warning' ? '#f59e0b' : '#ef4444',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '24px'
+        }}>
           {message.type === 'success' ? (
-            <CheckCircle className="h-4 w-4" />
+            <CheckCircle style={{ width: '16px', height: '16px' }} />
           ) : (
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle style={{ width: '16px', height: '16px' }} />
           )}
           {message.text}
         </div>
       )}
 
-      <div className="max-w-4xl">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Profile Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-card border border-border rounded-lg p-8">
-              <div className="flex items-center gap-3 mb-8">
-                <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-full">
-                  <User className="h-6 w-6 text-primary" />
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
+        {/* Main Profile Form */}
+        <div>
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            padding: '32px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '32px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '48px',
+                height: '48px',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                borderRadius: '50%'
+              }}>
+                <User style={{ width: '24px', height: '24px', color: '#f59e0b' }} />
+              </div>
+              <div>
+                <h2 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  color: '#fafafa',
+                  margin: 0
+                }}>Personal Information</h2>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#999',
+                  margin: 0
+                }}>Update your personal details below.</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: '24px' }}>
+              {/* Email (Read Only) */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#ccc',
+                  marginBottom: '6px'
+                }}>
+                  Email Address
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Mail style={{
+                    position: 'absolute',
+                    left: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: '16px',
+                    height: '16px',
+                    color: '#999'
+                  }} />
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    readOnly
+                    style={{
+                      width: '100%',
+                      paddingLeft: '40px',
+                      paddingRight: '12px',
+                      paddingTop: '12px',
+                      paddingBottom: '12px',
+                      border: '1px solid #444',
+                      borderRadius: '6px',
+                      backgroundColor: '#222',
+                      color: '#999',
+                      cursor: 'not-allowed',
+                      fontSize: '14px'
+                    }}
+                  />
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-card-foreground">Personal Information</h2>
-                  <p className="text-sm text-muted-foreground">Update your personal details below.</p>
-                </div>
+                <p style={{
+                  fontSize: '12px',
+                  color: '#666',
+                  marginTop: '4px',
+                  margin: 0
+                }}>
+                  Email address cannot be changed. Contact support if you need to update it.
+                </p>
               </div>
 
-          <form className="space-y-6">
-            {/* Email (Read Only) */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              {/* Username */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#ccc',
+                  marginBottom: '6px'
+                }}>
+                  Username
+                </label>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  readOnly
-                  className="w-full pl-10 pr-3 py-2 border border-input rounded-md bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
+                  type="text"
+                  id="username"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder="Enter your username"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #444',
+                    borderRadius: '6px',
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontSize: '14px'
+                  }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Email address cannot be changed. Contact support if you need to update it.
-              </p>
-            </div>
 
-            {/* Username */}
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-foreground mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                id="username"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Enter your username"
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* First Name */}
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-2">
-                First Name
-              </label>
-              <input
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                placeholder="Enter your first name"
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* Last Name */}
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-2">
-                Last Name
-              </label>
-              <input
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                placeholder="Enter your last name"
-                className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-4 pt-6">
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving || !hasChanges()}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSaving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4" />
-                    Save Changes
-                  </>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-6 py-3 rounded-md hover:bg-secondary/80 transition-colors"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Clear
-              </button>
-            </div>
-          </form>
-            </div>
-
-            {/* Password Management Section */}
-            <div className="bg-card border border-border rounded-lg p-8 mt-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-12 h-12 bg-orange-50 rounded-full">
-                  <Lock className="h-6 w-6 text-orange-600" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-card-foreground">Password & Security</h2>
-                  <p className="text-sm text-muted-foreground">Manage your account password and security settings.</p>
-                </div>
+              {/* First Name */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#ccc',
+                  marginBottom: '6px'
+                }}>
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your first name"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #444',
+                    borderRadius: '6px',
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontSize: '14px'
+                  }}
+                />
               </div>
 
-              {!showPasswordForm ? (
+              {/* Last Name */}
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#ccc',
+                  marginBottom: '6px'
+                }}>
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your last name"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #444',
+                    borderRadius: '6px',
+                    backgroundColor: '#333',
+                    color: '#fff',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+
+              {/* Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                paddingTop: '24px',
+                borderTop: '1px solid #333',
+                marginTop: '24px'
+              }}>
                 <button
-                  onClick={() => setShowPasswordForm(true)}
-                  className="inline-flex items-center gap-2 bg-orange-100 text-orange-800 hover:bg-orange-200 px-4 py-2 rounded-md transition-colors"
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving || !hasChanges()}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    backgroundColor: hasChanges() ? '#f59e0b' : '#666',
+                    color: hasChanges() ? '#000' : '#999',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: hasChanges() ? 'pointer' : 'not-allowed'
+                  }}
                 >
-                  <Lock className="h-4 w-4" />
-                  Change Password
+                  {isSaving ? (
+                    <>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid transparent',
+                        borderTop: '2px solid #000',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save style={{ width: '16px', height: '16px' }} />
+                      Save Changes
+                    </>
+                  )}
                 </button>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="currentPassword" className="block text-sm font-medium text-foreground mb-2">
-                      Current Password <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                      placeholder="Enter your current password"
-                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-foreground mb-2">
-                      New Password <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                      placeholder="Enter your new password"
-                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
-                      Confirm New Password <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="Confirm your new password"
-                      className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-
-                  <div className="flex gap-4 pt-4">
-                    <button
-                      onClick={handlePasswordChange}
-                      disabled={isChangingPassword}
-                      className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {isChangingPassword ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary-foreground border-t-transparent" />
-                      ) : (
-                        <Lock className="h-4 w-4" />
-                      )}
-                      {isChangingPassword ? 'Updating...' : 'Update Password'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowPasswordForm(false);
-                        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-                        setMessage({ type: '', text: '' });
-                      }}
-                      disabled={isChangingPassword}
-                      className="inline-flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    backgroundColor: 'transparent',
+                    color: '#f59e0b',
+                    border: '1px solid #f59e0b',
+                    borderRadius: '6px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <RotateCcw style={{ width: '16px', height: '16px' }} />
+                  Clear
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Current Plan */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  isPro ? 'bg-blue-100' : 'bg-gray-100'
-                }`}>
-                  <Crown className={`h-5 w-5 ${
-                    isPro ? 'text-blue-600' : 'text-gray-600'
-                  }`} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-card-foreground">Current Plan</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {isPro ? 'PlanPilot Pro' : 'Free Plan'}
-                  </p>
-                </div>
+          {/* Password Management Section */}
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            padding: '32px',
+            marginTop: '24px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '48px',
+                height: '48px',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: '50%'
+              }}>
+                <Lock style={{ width: '24px', height: '24px', color: '#ef4444' }} />
               </div>
-
-              {isPro ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    <span>All premium features unlocked</span>
-                  </div>
-                  {profileData?.next_billing_date && (
-                    <p className="text-xs text-muted-foreground">
-                      Next billing: {new Date(profileData.next_billing_date).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="mt-4">
-                  <UpgradePrompt feature="advanced-features" className="!p-4" />
-                </div>
-              )}
+              <div>
+                <h2 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  color: '#fafafa',
+                  margin: 0
+                }}>Password & Security</h2>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#999',
+                  margin: 0
+                }}>Manage your account password and security settings.</p>
+              </div>
             </div>
 
-            {/* Account Information */}
-            <div className="bg-card border border-border rounded-lg p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
-                  <Activity className="h-5 w-5 text-green-600" />
-                </div>
+            {!showPasswordForm ? (
+              <button
+                onClick={() => setShowPasswordForm(true)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: '#ef4444',
+                  border: '1px solid #ef4444',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Lock style={{ width: '16px', height: '16px' }} />
+                Change Password
+              </button>
+            ) : (
+              <div style={{ display: 'grid', gap: '16px' }}>
                 <div>
-                  <h3 className="font-semibold text-card-foreground">Account Info</h3>
-                  <p className="text-sm text-muted-foreground">Account details and activity</p>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#ccc',
+                    marginBottom: '6px'
+                  }}>
+                    Current Password <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="currentPassword"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Enter your current password"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #444',
+                      borderRadius: '6px',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#ccc',
+                    marginBottom: '6px'
+                  }}>
+                    New Password <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="newPassword"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Enter your new password"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #444',
+                      borderRadius: '6px',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{
+                    display: 'block',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#ccc',
+                    marginBottom: '6px'
+                  }}>
+                    Confirm New Password <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirm your new password"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '1px solid #444',
+                      borderRadius: '6px',
+                      backgroundColor: '#333',
+                      color: '#fff',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '16px', paddingTop: '16px' }}>
+                  <button
+                    onClick={handlePasswordChange}
+                    disabled={isChangingPassword}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backgroundColor: '#f59e0b',
+                      color: '#000',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: isChangingPassword ? 'not-allowed' : 'pointer',
+                      opacity: isChangingPassword ? 0.5 : 1
+                    }}
+                  >
+                    {isChangingPassword ? (
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid transparent',
+                        borderTop: '2px solid #000',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                    ) : (
+                      <Lock style={{ width: '16px', height: '16px' }} />
+                    )}
+                    {isChangingPassword ? 'Updating...' : 'Update Password'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                      setMessage({ type: '', text: '' });
+                    }}
+                    disabled={isChangingPassword}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backgroundColor: 'transparent',
+                      color: '#f59e0b',
+                      border: '1px solid #f59e0b',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontSize: '14px',
+                      cursor: isChangingPassword ? 'not-allowed' : 'pointer',
+                      opacity: isChangingPassword ? 0.5 : 1
+                    }}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
+        </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Member Since:</span>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
-                    </span>
-                  </div>
+        {/* Sidebar */}
+        <div style={{ display: 'grid', gap: '24px' }}>
+          {/* Current Plan */}
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            padding: '24px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: isPro ? 'rgba(59, 130, 246, 0.1)' : 'rgba(107, 114, 128, 0.1)'
+              }}>
+                <Crown style={{
+                  width: '20px',
+                  height: '20px',
+                  color: isPro ? '#3b82f6' : '#6b7280'
+                }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#fafafa',
+                  margin: 0
+                }}>Current Plan</h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#999',
+                  margin: 0
+                }}>
+                  {isPro ? 'PlanPilot Pro' : 'Free Plan'}
+                </p>
+              </div>
+            </div>
+
+            {isPro ? (
+              <div style={{ display: 'grid', gap: '8px' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '14px',
+                  color: '#10b981'
+                }}>
+                  <CheckCircle style={{ width: '16px', height: '16px' }} />
+                  <span>All premium features unlocked</span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Last Sign In:</span>
-                  <div className="flex items-center gap-1">
-                    <Activity className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">
-                      {user.lastSignInAt ? new Date(user.lastSignInAt).toLocaleDateString() : 'N/A'}
-                    </span>
-                  </div>
+                {profileData?.next_billing_date && (
+                  <p style={{
+                    fontSize: '12px',
+                    color: '#666',
+                    margin: 0
+                  }}>
+                    Next billing: {new Date(profileData.next_billing_date).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div style={{ marginTop: '16px' }}>
+                <div style={{
+                  padding: '16px',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid #f59e0b',
+                  borderRadius: '6px',
+                  textAlign: 'center'
+                }}>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#f59e0b',
+                    margin: '0 0 8px'
+                  }}>Upgrade to unlock premium features</p>
+                  <a
+                    href="/pricing"
+                    style={{
+                      display: 'inline-block',
+                      padding: '6px 12px',
+                      backgroundColor: '#f59e0b',
+                      color: '#000',
+                      borderRadius: '4px',
+                      textDecoration: 'none',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}
+                  >
+                    View Plans
+                  </a>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Profile Status:</span>
-                  <span className="inline-flex items-center gap-1 text-sm font-medium text-green-600">
-                    <CheckCircle className="h-3 w-3" />
-                    Active
+              </div>
+            )}
+          </div>
+
+          {/* Account Information */}
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '8px',
+            padding: '24px'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '40px',
+                height: '40px',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderRadius: '50%'
+              }}>
+                <Activity style={{ width: '20px', height: '20px', color: '#10b981' }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#fafafa',
+                  margin: 0
+                }}>Account Info</h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: '#999',
+                  margin: 0
+                }}>Account details and activity</p>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gap: '12px' }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '14px', color: '#999' }}>Member Since:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Calendar style={{ width: '12px', height: '12px', color: '#999' }} />
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#fafafa'
+                  }}>
+                    {new Date().toLocaleDateString()}
                   </span>
                 </div>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '14px', color: '#999' }}>Last Sign In:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Activity style={{ width: '12px', height: '12px', color: '#999' }} />
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: '#fafafa'
+                  }}>
+                    {new Date().toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{ fontSize: '14px', color: '#999' }}>Profile Status:</span>
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#10b981'
+                }}>
+                  <CheckCircle style={{ width: '12px', height: '12px' }} />
+                  Active
+                </span>
               </div>
             </div>
           </div>
