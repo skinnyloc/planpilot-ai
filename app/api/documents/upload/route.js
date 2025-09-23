@@ -1,11 +1,20 @@
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "placeholder",
-  process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder"
-);
+function getSupabaseClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key || url === "https://your-project.supabase.co" || key === "your-service-role-key") {
+    return null;
+  }
+
+  return createClient(url, key);
+}
 
 export async function POST(request) {
   try {
