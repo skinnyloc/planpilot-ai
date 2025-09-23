@@ -11,8 +11,6 @@
     "export": "next export",
     "setup-supabase": "node add-supabase-keys.js",
     "setup-r2": "node setup-r2.js",
-    "setup-clerk": "node add-clerk-keys.js",
-    "migrate-clerk": "node migrate-clerk-keys.js",
     "migrate-business-ideas": "node scripts/migrate-business-ideas.js",
     "migrate-documents": "node scripts/migrate-documents.js",
     "setup-paypal": "node scripts/setup-paypal.js",
@@ -38,8 +36,6 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.890.0",
     "@aws-sdk/s3-request-presigner": "^3.890.0",
-    "@clerk/clerk-react": "^5.0.0",
-    "@clerk/nextjs": "^5.0.0",
     "@hookform/resolvers": "^4.1.2",
     "@paypal/paypal-server-sdk": "^1.1.0",
     "@radix-ui/react-accordion": "^1.2.3",

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
 import { Loader2, AlertCircle, Shield } from 'lucide-react';
 
 export default function PayPalButton({ planId, billingCycle = 'monthly', onSuccess, onError, onCancel }) {
@@ -10,7 +9,6 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientId, setClientId] = useState(null);
   const paypalButtonRef = useRef(null);
-  const { user } = useUser();
 
   useEffect(() => {
     // Fetch PayPal client ID securely
@@ -31,7 +29,7 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
   }, []);
 
   useEffect(() => {
-    if (!user || !clientId) return;
+    if (!clientId) return;
 
     // Load PayPal SDK
     const loadPayPalSDK = () => {
@@ -135,19 +133,9 @@ export default function PayPalButton({ planId, billingCycle = 'monthly', onSucce
     };
 
     initializePayPal();
-  }, [user, clientId, planId, billingCycle, onSuccess, onError, onCancel]);
+  }, [clientId, planId, billingCycle, onSuccess, onError, onCancel]);
 
 
-  if (!user) {
-    return (
-      <div className="bg-muted/50 border border-border rounded-lg p-4 text-center">
-        <AlertCircle className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">
-          Please sign in to continue with payment
-        </p>
-      </div>
-    );
-  }
 
 
   if (error) {

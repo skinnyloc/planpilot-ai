@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { Lightbulb, FileText, Send, File, Home } from 'lucide-react';
 

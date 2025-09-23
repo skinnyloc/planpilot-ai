@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import {
   Menu,
@@ -22,38 +21,20 @@ import {
 
 export default function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const currentPath = pathname;
-  const { user, isLoaded } = useUser();
 
-  useEffect(() => {
-    if (isLoaded && user) {
-      const adminEmail = 'vansworld1987@gmail.com';
-      const userEmail = user?.emailAddresses?.[0]?.emailAddress;
-      setIsAdmin(userEmail === adminEmail);
-    }
-  }, [isLoaded, user]);
-
-  const getNavigation = () => {
-    const baseNavigation = [
-      { name: 'Dashboard', href: '/dashboard', icon: Home },
-      { name: 'Business Idea', href: '/business-idea', icon: Lightbulb },
-      { name: 'Business Plans', href: '/business-plans', icon: FileText },
-      { name: 'Grants', href: '/grants', icon: Gift },
-      { name: 'Grant Proposals', href: '/grant-proposals', icon: Send },
-      { name: 'Credit Guide', href: '/credit-guide', icon: CreditCard },
-      { name: 'Documents', href: '/documents', icon: File },
-      { name: 'Pricing', href: '/pricing', icon: DollarSign },
-      { name: 'Profile', href: '/profile', icon: User },
-    ];
-
-    if (isAdmin) {
-      baseNavigation.push({ name: 'Admin Panel', href: '/admin', icon: Shield });
-    }
-
-    return baseNavigation;
-  };
+  const navigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Business Idea', href: '/business-idea', icon: Lightbulb },
+    { name: 'Business Plans', href: '/business-plans', icon: FileText },
+    { name: 'Grants', href: '/grants', icon: Gift },
+    { name: 'Grant Proposals', href: '/grant-proposals', icon: Send },
+    { name: 'Credit Guide', href: '/credit-guide', icon: CreditCard },
+    { name: 'Documents', href: '/documents', icon: File },
+    { name: 'Pricing', href: '/pricing', icon: DollarSign },
+    { name: 'Profile', href: '/profile', icon: User },
+  ];
 
   const handleNavClick = () => {
     setSidebarOpen(false);
@@ -102,7 +83,7 @@ export default function MainLayout({ children }) {
         {/* Navigation */}
         <nav style={{ flex: 1, padding: '16px 12px' }}>
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {getNavigation().map((item) => {
+            {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = currentPath === item.href;
               return (
@@ -206,7 +187,7 @@ export default function MainLayout({ children }) {
           </div>
           <nav style={{ padding: '16px 12px' }}>
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {getNavigation().map((item) => {
+              {navigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = currentPath === item.href;
                 return (
