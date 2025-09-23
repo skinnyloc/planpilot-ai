@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Upload, FileText, Download, Eye, Trash2, Edit3, Calendar, User, Building } from 'lucide-react';
 
-const DocumentCard = ({ document, onView, onEdit, onDelete, onDownload }) => (
+const DocumentCard = ({ document, onView, onDelete, onDownload }) => (
     <div style={{
         backgroundColor: '#000',
         border: '1px solid #f59e0b',
@@ -77,25 +77,6 @@ const DocumentCard = ({ document, onView, onEdit, onDelete, onDownload }) => (
                     View
                 </button>
                 <button
-                    onClick={() => onEdit(document)}
-                    style={{
-                        backgroundColor: 'transparent',
-                        color: '#f59e0b',
-                        border: '1px solid #f59e0b',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}
-                >
-                    <Edit3 style={{ width: '12px', height: '12px' }} />
-                    Edit
-                </button>
-                <button
                     onClick={() => onDownload(document)}
                     style={{
                         backgroundColor: '#f59e0b',
@@ -167,10 +148,12 @@ const DocumentViewer = ({ document, onClose }) => (
             border: '1px solid #f59e0b',
             borderRadius: '12px',
             padding: '24px',
-            maxWidth: '800px',
+            maxWidth: '90vw',
             maxHeight: '90vh',
             width: '100%',
-            overflow: 'auto'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
         }}>
             <div style={{
                 display: 'flex',
@@ -205,25 +188,82 @@ const DocumentViewer = ({ document, onClose }) => (
                 </button>
             </div>
             <div style={{
-                padding: '16px',
+                flex: 1,
                 backgroundColor: '#1a1a1a',
                 borderRadius: '8px',
                 border: '1px solid #333',
-                color: '#ccc',
-                lineHeight: '1.6'
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
             }}>
-                <p>Document preview would be displayed here. This could include:</p>
-                <ul style={{ paddingLeft: '20px', marginTop: '16px' }}>
-                    <li>PDF viewer integration</li>
-                    <li>Text document content</li>
-                    <li>Image preview</li>
-                    <li>Metadata information</li>
-                </ul>
-                <p style={{ marginTop: '16px', fontStyle: 'italic' }}>
-                    File Type: {document.type}<br />
-                    Size: {document.file_size}<br />
-                    Created: {new Date(document.created_date).toLocaleDateString()}
-                </p>
+                {document.pdf_content ? (
+                    <iframe
+                        src={document.pdf_content}
+                        style={{
+                            width: '100%',
+                            height: '70vh',
+                            border: 'none',
+                            borderRadius: '8px'
+                        }}
+                        title={`PDF Viewer - ${document.name}`}
+                    />
+                ) : (
+                    <div style={{
+                        padding: '24px',
+                        color: '#ccc',
+                        lineHeight: '1.6',
+                        height: '70vh',
+                        overflow: 'auto'
+                    }}>
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '48px 24px'
+                        }}>
+                            <FileText style={{
+                                width: '64px',
+                                height: '64px',
+                                color: '#f59e0b',
+                                margin: '0 auto 16px'
+                            }} />
+                            <h4 style={{
+                                fontSize: '1.125rem',
+                                fontWeight: '600',
+                                color: '#fafafa',
+                                marginBottom: '12px'
+                            }}>
+                                PDF Preview
+                            </h4>
+                            <p style={{ marginBottom: '20px', color: '#999' }}>
+                                This would display the PDF content for:
+                            </p>
+                            <div style={{
+                                backgroundColor: '#000',
+                                border: '1px solid #f59e0b',
+                                borderRadius: '8px',
+                                padding: '16px',
+                                textAlign: 'left',
+                                maxWidth: '400px',
+                                margin: '0 auto'
+                            }}>
+                                <p style={{ margin: '0 0 8px 0', color: '#f59e0b', fontWeight: '600' }}>
+                                    {document.name}
+                                </p>
+                                <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                    Type: {document.type}
+                                </p>
+                                <p style={{ margin: '0 0 8px 0', fontSize: '14px' }}>
+                                    Size: {document.file_size}
+                                </p>
+                                <p style={{ margin: '0', fontSize: '14px' }}>
+                                    Created: {new Date(document.created_date).toLocaleDateString()}
+                                </p>
+                            </div>
+                            <p style={{ marginTop: '20px', fontSize: '14px', color: '#666' }}>
+                                PDF viewer integration would render the actual document content here
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     </div>
@@ -254,7 +294,8 @@ export default function DocumentsPage() {
                 type: "Business Plan",
                 file_size: "2.4 MB",
                 created_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                description: "Comprehensive business plan for technology startup focusing on AI solutions."
+                description: "Comprehensive business plan for technology startup focusing on AI solutions.",
+                pdf_content: null // Would contain actual PDF blob or URL
             },
             {
                 id: 2,
@@ -262,7 +303,8 @@ export default function DocumentsPage() {
                 type: "Grant Proposal",
                 file_size: "1.8 MB",
                 created_date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-                description: "Small Business Innovation Research grant proposal for research and development."
+                description: "Small Business Innovation Research grant proposal for research and development.",
+                pdf_content: null // Would contain actual PDF blob or URL
             },
             {
                 id: 3,
@@ -270,7 +312,8 @@ export default function DocumentsPage() {
                 type: "Strategy Document",
                 file_size: "1.2 MB",
                 created_date: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-                description: "Detailed marketing strategy and campaign planning document."
+                description: "Detailed marketing strategy and campaign planning document.",
+                pdf_content: null // Would contain actual PDF blob or URL
             },
             {
                 id: 4,
@@ -278,7 +321,8 @@ export default function DocumentsPage() {
                 type: "Financial Report",
                 file_size: "956 KB",
                 created_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-                description: "Quarterly financial projections and revenue forecasts."
+                description: "Quarterly financial projections and revenue forecasts.",
+                pdf_content: null // Would contain actual PDF blob or URL
             }
         ];
 
@@ -314,7 +358,93 @@ export default function DocumentsPage() {
     };
 
     const handleDownload = (document) => {
-        alert(`Download "${document.name}" would be implemented here.`);
+        // Create a mock PDF content
+        const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 200
+>>
+stream
+BT
+/F1 12 Tf
+50 750 Td
+(${document.name}) Tj
+0 -20 Td
+(Type: ${document.type}) Tj
+0 -20 Td
+(Created: ${new Date(document.created_date).toLocaleDateString()}) Tj
+0 -20 Td
+(Size: ${document.file_size}) Tj
+0 -40 Td
+(${document.description || 'No description available'}) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+0000000274 00000 n
+0000000526 00000 n
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+625
+%%EOF`;
+
+        // Create blob and download
+        const blob = new Blob([pdfContent], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${document.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     };
 
     const handleDelete = (document) => {
@@ -567,7 +697,6 @@ export default function DocumentsPage() {
                             key={doc.id}
                             document={doc}
                             onView={handleView}
-                            onEdit={handleEdit}
                             onDownload={handleDownload}
                             onDelete={handleDelete}
                         />
