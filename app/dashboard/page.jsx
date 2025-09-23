@@ -1,128 +1,164 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Lightbulb, FileText, Send, File, Home } from 'lucide-react';
+import { Building2, FileText, DollarSign, CreditCard, ArrowRight, Plus } from 'lucide-react';
 
 export default function DashboardPage() {
-  const actionCards = [
-    {
-      title: 'Business Ideas',
-      description: 'Explore and develop your business concepts',
-      href: '/business-idea',
-      icon: Lightbulb
-    },
-    {
-      title: 'Business Plans',
-      description: 'Create comprehensive business plans',
-      href: '/business-plans',
-      icon: FileText
-    },
-    {
-      title: 'Grant Proposals',
-      description: 'Submit and manage grant applications',
-      href: '/grant-proposals',
-      icon: Send
-    },
-    {
-      title: 'Documents',
-      description: 'Manage your files and documents',
-      href: '/documents',
-      icon: File
-    }
+  const [ideaCount, setIdeaCount] = useState(0);
+
+  useEffect(() => {
+    setIdeaCount(2);
+  }, []);
+
+  const actions = [
+    { title: "Define Your Business Idea", icon: Building2, url: "/business-idea" },
+    { title: "Generate a Business Plan", icon: FileText, url: "/business-plans" },
+    { title: "Draft a Grant Proposal", icon: DollarSign, url: "/grant-proposals" },
+    { title: "Build Your Business Credit", icon: CreditCard, url: "/credit-guide" },
   ];
 
   return (
-    <div style={{ display: 'grid', gap: '32px' }}>
-      {/* Welcome Card */}
-      <div style={{
-        backgroundColor: '#1a1a1a',
-        border: '1px solid #333',
-        borderRadius: '8px',
-        padding: '24px'
-      }}>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+      <div>
         <h1 style={{
           fontSize: '2rem',
           fontWeight: 'bold',
           color: '#fafafa',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
+          marginBottom: '8px'
         }}>
-          <Home style={{ color: '#f59e0b' }} />
           Welcome to Your Business Hub
         </h1>
         <p style={{ color: '#999', fontSize: '1rem', margin: 0 }}>
-          Manage your business ideas, plans, and funding opportunities all in one place.
+          Plan, fund, and grow your business, all in one place.
         </p>
       </div>
 
-      {/* Action Cards Grid */}
+      <div style={{
+        backgroundColor: '#000',
+        border: '2px solid #f59e0b',
+        borderRadius: '12px',
+        padding: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div>
+          <p style={{ fontSize: '14px', color: '#999', marginBottom: '4px' }}>You have</p>
+          <p style={{
+            fontSize: '2rem',
+            fontWeight: '600',
+            color: '#fafafa',
+            marginBottom: '4px'
+          }}>
+            {ideaCount} Business Idea{ideaCount !== 1 ? 's' : ''}
+          </p>
+          <p style={{ fontSize: '14px', color: '#999', margin: 0 }}>ready to be developed.</p>
+        </div>
+        <Link
+          href="/business-idea"
+          style={{
+            backgroundColor: '#f59e0b',
+            color: '#000',
+            border: 'none',
+            borderRadius: '8px',
+            padding: '12px 20px',
+            fontSize: '14px',
+            fontWeight: '600',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            transition: 'all 0.2s',
+            cursor: 'pointer'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#d97706';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = '#f59e0b';
+          }}
+        >
+          <Plus style={{ width: '16px', height: '16px' }} />
+          Add Idea
+        </Link>
+      </div>
+
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: '24px'
       }}>
-        {actionCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <Link
-              key={card.title}
-              href={card.href}
-              style={{
-                display: 'block',
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '8px',
-                padding: '24px',
-                textDecoration: 'none',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#333';
-                e.target.style.borderColor = '#f59e0b';
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#1a1a1a';
-                e.target.style.borderColor = '#333';
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'start', gap: '16px' }}>
-                <div style={{ flexShrink: 0 }}>
-                  <Icon style={{ width: '32px', height: '32px', color: '#f59e0b' }} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3 style={{
-                    fontSize: '1.125rem',
-                    fontWeight: '600',
-                    color: '#fafafa',
-                    marginBottom: '8px',
-                    margin: '0 0 8px'
-                  }}>
-                    {card.title}
-                  </h3>
-                  <p style={{
-                    fontSize: '14px',
-                    color: '#999',
-                    marginBottom: '16px',
-                    margin: '0 0 16px'
-                  }}>
-                    {card.description}
-                  </p>
-                  <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    color: '#f59e0b'
-                  }}>
-                    Get Started →
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+        {actions.map((action) => (
+          <div
+            key={action.title}
+            style={{
+              backgroundColor: '#000',
+              border: '1px solid #f59e0b',
+              borderRadius: '12px',
+              padding: '0',
+              overflow: 'hidden',
+              transition: 'all 0.2s',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(245, 158, 11, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <div style={{
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              borderBottom: '1px solid #f59e0b'
+            }}>
+              <h3 style={{
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: '#fafafa',
+                margin: 0
+              }}>
+                {action.title}
+              </h3>
+              <action.icon style={{ width: '24px', height: '24px', color: '#999' }} />
+            </div>
+            <div style={{ padding: '20px' }}>
+              <Link
+                href={action.url}
+                style={{
+                  backgroundColor: '#f59e0b',
+                  color: '#000',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '10px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#d97706';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#f59e0b';
+                }}
+              >
+                Get Started
+                <ArrowRight style={{ width: '16px', height: '16px' }} />
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
