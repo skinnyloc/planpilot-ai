@@ -1,401 +1,184 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lightbulb, Save, Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { Save, Trash2, Plus } from 'lucide-react';
 
 export default function BusinessIdeaPage() {
-  const [formData, setFormData] = useState({
-    businessName: '',
-    problemSolved: '',
-    targetMarket: '',
-    businessModel: '',
-    competitiveAdvantage: '',
-    additionalNotes: ''
-  });
+  const [ideas, setIdeas] = useState([]);
+  const [currentIdea, setCurrentIdea] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const [savedIdeas, setSavedIdeas] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [message, setMessage] = useState('');
-
-  // Load saved ideas from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('businessIdeas');
-    if (stored) {
-      setSavedIdeas(JSON.parse(stored));
-    }
+    loadIdeas();
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const loadIdeas = async () => {
+    const stored = localStorage.getItem('businessIdeas');
+    if (stored) {
+      setIdeas(JSON.parse(stored));
+    }
   };
 
-  const handleSave = () => {
-    if (!formData.businessName.trim()) {
-      setMessage('Business name is required');
-      return;
+  const validate = () => {
+    const newErrors = {};
+    if (!currentIdea.business_name?.trim()) newErrors.business_name = "Business name is required.";
+    if (!currentIdea.business_address?.trim()) newErrors.business_address = "Business address is required.";
+    if (!currentIdea.problem_solved?.trim()) newErrors.problem_solved = "Problem solved is required.";
+
+    const yearsInBusiness = Number(currentIdea.years_in_business);
+    if (isNaN(yearsInBusiness) || yearsInBusiness < 0) {
+      newErrors.years_in_business = "Years in business must be a non-negative number.";
     }
 
-    const idea = {
-      id: editingId || Date.now(),
-      ...formData,
-      createdAt: editingId ? savedIdeas.find(idea => idea.id === editingId)?.createdAt : new Date().toLocaleDateString(),
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNew = () => {
+    setCurrentIdea({
+      business_name: "",
+      concept: "",
+      extra_prompt: "",
+      business_address: "",
+      years_in_business: 0,
+      problem_solved: "",
+      mission_statement: "",
+      target_market: "",
+      business_goals: "",
+      industry: "",
+      startup_costs: 0,
+      revenue_model: "",
+      competitive_advantage: "",
+      location: ""
+    });
+    setErrors({});
+  };
+
+  const handleSelect = (idea) => {
+    setCurrentIdea(idea);
+    setErrors({});
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentIdea(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!currentIdea || !validate()) return;
+    setIsSaving(true);
+
+    const dataToSave = {
+      ...currentIdea,
+      startup_costs: Number(currentIdea.startup_costs) || 0,
+      years_in_business: Number(currentIdea.years_in_business) || 0,
+      id: currentIdea.id || Date.now(),
+      createdAt: currentIdea.createdAt || new Date().toLocaleDateString(),
       updatedAt: new Date().toLocaleDateString()
     };
 
     let updatedIdeas;
-    if (editingId) {
-      updatedIdeas = savedIdeas.map(item => item.id === editingId ? idea : item);
-      setMessage('Business idea updated successfully!');
+    if (currentIdea.id) {
+      updatedIdeas = ideas.map(item => item.id === currentIdea.id ? dataToSave : item);
     } else {
-      updatedIdeas = [...savedIdeas, idea];
-      setMessage('Business idea saved successfully!');
+      updatedIdeas = [...ideas, dataToSave];
     }
 
-    setSavedIdeas(updatedIdeas);
+    setIdeas(updatedIdeas);
+    localStorage.setItem('businessIdeas', JSON.stringify(updatedIdeas));
+    setCurrentIdea(null);
+    setIsSaving(false);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Are you sure you want to delete this business idea?')) return;
+
+    const updatedIdeas = ideas.filter(idea => idea.id !== id);
+    setIdeas(updatedIdeas);
     localStorage.setItem('businessIdeas', JSON.stringify(updatedIdeas));
 
-    // Clear form
-    setFormData({
-      businessName: '',
-      problemSolved: '',
-      targetMarket: '',
-      businessModel: '',
-      competitiveAdvantage: '',
-      additionalNotes: ''
-    });
-    setIsEditing(false);
-    setEditingId(null);
-
-    setTimeout(() => setMessage(''), 3000);
-  };
-
-  const handleEdit = (idea) => {
-    setFormData(idea);
-    setIsEditing(true);
-    setEditingId(idea.id);
-  };
-
-  const handleDelete = (id) => {
-    if (confirm('Are you sure you want to delete this business idea?')) {
-      const updatedIdeas = savedIdeas.filter(idea => idea.id !== id);
-      setSavedIdeas(updatedIdeas);
-      localStorage.setItem('businessIdeas', JSON.stringify(updatedIdeas));
-      setMessage('Business idea deleted successfully!');
-      setTimeout(() => setMessage(''), 3000);
+    if (currentIdea && currentIdea.id === id) {
+      setCurrentIdea(null);
     }
   };
 
-  const handleNewIdea = () => {
-    setFormData({
-      businessName: '',
-      problemSolved: '',
-      targetMarket: '',
-      businessModel: '',
-      competitiveAdvantage: '',
-      additionalNotes: ''
-    });
-    setIsEditing(false);
-    setEditingId(null);
-  };
+  const Field = ({ id, label, value, onChange, type = "text", isTextarea = false, required = false, placeholder = "", error = null }) => (
+    <div style={{ marginBottom: '20px' }}>
+      <label style={{
+        display: 'block',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: '#ccc',
+        marginBottom: '6px'
+      }}>
+        {label}{required && ' *'}
+      </label>
+      {isTextarea ? (
+        <textarea
+          id={id}
+          name={id}
+          value={value || ""}
+          onChange={onChange}
+          placeholder={placeholder}
+          rows={3}
+          style={{
+            width: '100%',
+            padding: '12px',
+            border: error ? '2px solid #ff6b6b' : '1px solid #f59e0b',
+            borderRadius: '8px',
+            backgroundColor: '#000',
+            color: '#fff',
+            fontSize: '14px',
+            resize: 'vertical',
+            outline: 'none'
+          }}
+        />
+      ) : (
+        <input
+          id={id}
+          name={id}
+          type={type}
+          value={value || ""}
+          onChange={onChange}
+          placeholder={placeholder}
+          style={{
+            width: '100%',
+            padding: '12px',
+            border: error ? '2px solid #ff6b6b' : '1px solid #f59e0b',
+            borderRadius: '8px',
+            backgroundColor: '#000',
+            color: '#fff',
+            fontSize: '14px',
+            outline: 'none'
+          }}
+        />
+      )}
+      {error && <p style={{ color: '#ff6b6b', fontSize: '12px', marginTop: '4px', margin: '4px 0 0' }}>{error}</p>}
+    </div>
+  );
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Header */}
+    <div style={{ padding: '32px' }}>
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{
           fontSize: '2rem',
           fontWeight: 'bold',
           color: '#fafafa',
-          marginBottom: '8px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
+          marginBottom: '8px'
         }}>
-          <Lightbulb style={{ color: '#f59e0b' }} />
-          Business Ideas
+          Business Idea Input
         </h1>
-        <p style={{ color: '#999', fontSize: '1rem' }}>
-          Create and manage your business ideas to generate comprehensive business plans
+        <p style={{ color: '#999', fontSize: '1rem', margin: 0 }}>
+          Plan, fund, and grow your business, all in one place.
         </p>
       </div>
 
-      {/* Success Message */}
-      {message && (
+      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '32px' }}>
         <div style={{
-          backgroundColor: '#1a1a1a',
+          backgroundColor: '#000',
           border: '1px solid #f59e0b',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          marginBottom: '24px',
-          color: '#f59e0b',
-          fontSize: '14px'
-        }}>
-          {message}
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '32px' }}>
-        {/* Main Form */}
-        <div style={{
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333',
-          borderRadius: '8px',
-          padding: '24px'
-        }}>
-          <div style={{ marginBottom: '24px' }}>
-            <h2 style={{
-              fontSize: '1.25rem',
-              fontWeight: '600',
-              color: '#fafafa',
-              marginBottom: '16px'
-            }}>
-              {isEditing ? 'Edit Business Idea' : 'Create New Business Idea'}
-            </h2>
-
-            <div style={{ display: 'grid', gap: '20px' }}>
-              {/* Business Name */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#ccc',
-                  marginBottom: '6px'
-                }}>
-                  Business Name *
-                </label>
-                <input
-                  type="text"
-                  name="businessName"
-                  value={formData.businessName}
-                  onChange={handleInputChange}
-                  placeholder="Enter your business name"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              {/* Problem Solved */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#ccc',
-                  marginBottom: '6px'
-                }}>
-                  Problem Your Business Solves
-                </label>
-                <textarea
-                  name="problemSolved"
-                  value={formData.problemSolved}
-                  onChange={handleInputChange}
-                  placeholder="Describe the problem your business addresses..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {/* Target Market */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#ccc',
-                  marginBottom: '6px'
-                }}>
-                  Target Market
-                </label>
-                <textarea
-                  name="targetMarket"
-                  value={formData.targetMarket}
-                  onChange={handleInputChange}
-                  placeholder="Who are your customers? Demographics, company types, market size..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {/* Business Model */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#ccc',
-                  marginBottom: '6px'
-                }}>
-                  Business Model
-                </label>
-                <textarea
-                  name="businessModel"
-                  value={formData.businessModel}
-                  onChange={handleInputChange}
-                  placeholder="How will you make money? Revenue streams, pricing strategy..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {/* Competitive Advantage */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#ccc',
-                  marginBottom: '6px'
-                }}>
-                  Competitive Advantage
-                </label>
-                <textarea
-                  name="competitiveAdvantage"
-                  value={formData.competitiveAdvantage}
-                  onChange={handleInputChange}
-                  placeholder="What makes you different from competitors?"
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {/* Additional Notes */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  color: '#ccc',
-                  marginBottom: '6px'
-                }}>
-                  Additional Notes
-                </label>
-                <textarea
-                  name="additionalNotes"
-                  value={formData.additionalNotes}
-                  onChange={handleInputChange}
-                  placeholder="Any additional information or context..."
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    backgroundColor: '#333',
-                    color: '#fff',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              marginTop: '24px',
-              paddingTop: '24px',
-              borderTop: '1px solid #333'
-            }}>
-              <button
-                onClick={handleSave}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backgroundColor: '#f59e0b',
-                  color: '#000',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '12px 24px',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                <Save size={16} />
-                {isEditing ? 'Update Idea' : 'Save Idea'}
-              </button>
-
-              {isEditing && (
-                <button
-                  onClick={handleNewIdea}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    backgroundColor: 'transparent',
-                    color: '#f59e0b',
-                    border: '1px solid #f59e0b',
-                    borderRadius: '6px',
-                    padding: '12px 24px',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Plus size={16} />
-                  New Idea
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Saved Ideas Sidebar */}
-        <div style={{
-          backgroundColor: '#1a1a1a',
-          border: '1px solid #333',
-          borderRadius: '8px',
+          borderRadius: '12px',
           padding: '24px',
           height: 'fit-content'
         }}>
@@ -411,101 +194,282 @@ export default function BusinessIdeaPage() {
               color: '#fafafa',
               margin: 0
             }}>
-              Saved Ideas ({savedIdeas.length})
+              Your Ideas
             </h3>
           </div>
 
-          {savedIdeas.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '32px 16px',
-              color: '#999'
-            }}>
-              <Lightbulb size={48} style={{ margin: '0 auto 16px', color: '#555' }} />
-              <p style={{ margin: 0, fontSize: '14px' }}>No saved ideas yet</p>
-              <p style={{ margin: '4px 0 0', fontSize: '12px' }}>Create your first business idea</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {savedIdeas.map((idea) => (
-                <div
-                  key={idea.id}
+          <button
+            onClick={handleNew}
+            style={{
+              width: '100%',
+              backgroundColor: '#f59e0b',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '12px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
+            }}
+          >
+            <Plus size={16} />
+            New Idea
+          </button>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {ideas.map(idea => (
+              <div
+                key={idea.id}
+                onClick={() => handleSelect(idea)}
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  backgroundColor: currentIdea?.id === idea.id ? '#333' : 'transparent',
+                  border: currentIdea?.id === idea.id ? '1px solid #f59e0b' : '1px solid transparent',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  if (currentIdea?.id !== idea.id) {
+                    e.target.style.backgroundColor = '#1a1a1a';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentIdea?.id !== idea.id) {
+                    e.target.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#fafafa',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {idea.business_name}
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(idea.id);
+                  }}
                   style={{
-                    backgroundColor: '#333',
-                    border: '1px solid #444',
-                    borderRadius: '6px',
-                    padding: '16px'
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    color: '#ff6b6b',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
-                  <h4 style={{
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          {currentIdea ? (
+            <div style={{
+              backgroundColor: '#000',
+              border: '1px solid #f59e0b',
+              borderRadius: '12px',
+              padding: '24px'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '24px'
+              }}>
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  color: '#fafafa',
+                  margin: 0
+                }}>
+                  {currentIdea.id ? `Editing: ${currentIdea.business_name}` : 'Create New Idea'}
+                </h3>
+              </div>
+
+              <div style={{ display: 'grid', gap: '0' }}>
+                <Field
+                  id="business_name"
+                  label="Business Name"
+                  value={currentIdea.business_name}
+                  onChange={handleChange}
+                  required
+                  error={errors.business_name}
+                />
+                <Field
+                  id="business_address"
+                  label="Business Address"
+                  value={currentIdea.business_address}
+                  onChange={handleChange}
+                  required
+                  error={errors.business_address}
+                />
+                <Field
+                  id="years_in_business"
+                  label="Years in Business"
+                  type="number"
+                  value={currentIdea.years_in_business}
+                  onChange={handleChange}
+                  error={errors.years_in_business}
+                />
+                <Field
+                  id="problem_solved"
+                  label="Problem Solved"
+                  value={currentIdea.problem_solved}
+                  onChange={handleChange}
+                  isTextarea
+                  required
+                  error={errors.problem_solved}
+                />
+
+                <div style={{ borderTop: '1px solid #f59e0b', margin: '20px 0', paddingTop: '20px' }}>
+                  <Field
+                    id="concept"
+                    label="Concept"
+                    value={currentIdea.concept}
+                    onChange={handleChange}
+                    isTextarea
+                  />
+                  <Field
+                    id="mission_statement"
+                    label="Mission Statement"
+                    value={currentIdea.mission_statement}
+                    onChange={handleChange}
+                    isTextarea
+                  />
+                  <Field
+                    id="target_market"
+                    label="Target Market"
+                    value={currentIdea.target_market}
+                    onChange={handleChange}
+                    isTextarea
+                  />
+                  <Field
+                    id="business_goals"
+                    label="Business Goals"
+                    value={currentIdea.business_goals}
+                    onChange={handleChange}
+                    isTextarea
+                  />
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    <Field
+                      id="industry"
+                      label="Industry"
+                      value={currentIdea.industry}
+                      onChange={handleChange}
+                    />
+                    <Field
+                      id="startup_costs"
+                      label="Startup Costs ($)"
+                      type="number"
+                      value={currentIdea.startup_costs}
+                      onChange={handleChange}
+                    />
+                  </div>
+
+                  <Field
+                    id="revenue_model"
+                    label="Revenue Model"
+                    value={currentIdea.revenue_model}
+                    onChange={handleChange}
+                    isTextarea
+                  />
+                  <Field
+                    id="competitive_advantage"
+                    label="Competitive Advantage"
+                    value={currentIdea.competitive_advantage}
+                    onChange={handleChange}
+                    isTextarea
+                  />
+                  <Field
+                    id="location"
+                    label="Location"
+                    value={currentIdea.location}
+                    onChange={handleChange}
+                  />
+                  <Field
+                    id="extra_prompt"
+                    label="Extra Instructions for AI"
+                    value={currentIdea.extra_prompt}
+                    onChange={handleChange}
+                    isTextarea
+                    placeholder="Tell the AI anything extra to include (tone, niche, special goals, partners, timeline, etc.)."
+                  />
+                </div>
+
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  style={{
+                    backgroundColor: '#f59e0b',
+                    color: '#000',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '14px 24px',
                     fontSize: '14px',
                     fontWeight: '600',
-                    color: '#fafafa',
-                    margin: '0 0 8px'
-                  }}>
-                    {idea.businessName}
-                  </h4>
-                  <p style={{
-                    fontSize: '12px',
-                    color: '#999',
-                    margin: '0 0 12px',
-                    lineHeight: '1.4',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden'
-                  }}>
-                    {idea.problemSolved || 'No description provided'}
-                  </p>
-                  <div style={{
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
                     display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     gap: '8px',
-                    fontSize: '12px'
-                  }}>
-                    <button
-                      onClick={() => handleEdit(idea)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backgroundColor: 'transparent',
-                        color: '#f59e0b',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      <Edit size={12} />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(idea.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        backgroundColor: 'transparent',
-                        color: '#ff6b6b',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      <Trash2 size={12} />
-                      Delete
-                    </button>
-                  </div>
-                  <div style={{
-                    fontSize: '11px',
-                    color: '#666',
-                    marginTop: '8px',
-                    paddingTop: '8px',
-                    borderTop: '1px solid #444'
-                  }}>
-                    Created: {idea.createdAt}
-                  </div>
-                </div>
-              ))}
+                    opacity: isSaving ? 0.7 : 1,
+                    width: 'fit-content'
+                  }}
+                >
+                  <Save size={16} />
+                  {isSaving ? 'Saving...' : 'Save Idea'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              backgroundColor: '#000',
+              border: '1px solid #f59e0b',
+              borderRadius: '12px',
+              padding: '48px',
+              textAlign: 'center',
+              minHeight: '400px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <h2 style={{
+                fontSize: '1.25rem',
+                fontWeight: '600',
+                color: '#fafafa',
+                marginBottom: '12px'
+              }}>
+                Select an idea to edit or create a new one.
+              </h2>
+              <p style={{
+                color: '#999',
+                fontSize: '1rem',
+                margin: 0
+              }}>
+                This is where you'll define the core of your business venture.
+              </p>
             </div>
           )}
         </div>
