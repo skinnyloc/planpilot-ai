@@ -5,4 +5,4 @@ Disallow: /documents
 Disallow: /profile
 Disallow: /api/
 
-Sitemap: https://planpilotai.app/sitemap.xml
+Sitemap: https://www.planpilotai.app/sitemap.xml

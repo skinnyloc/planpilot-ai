@@ -15,12 +15,12 @@ export const metadata = {
   openGraph: {
     title: 'PlanPilot AI - Smart Business Planning',
     description: 'Generate professional business plans, proposals, and secure funding with AI-powered tools.',
-    url: 'https://planpilotai.app',
+    url: 'https://www.planpilotai.app',
     siteName: 'PlanPilot AI',
     type: 'website',
     images: [
       {
-        url: 'https://planpilotai.app/og-image.png',
+        url: 'https://www.planpilotai.app/og-image.png',
         width: 1200,
         height: 630,
         alt: 'PlanPilot AI - Smart Business Planning',
@@ -31,7 +31,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'PlanPilot AI - Smart Business Planning',
     description: 'Generate professional business plans, proposals, and secure funding with AI-powered tools.',
-    images: ['https://planpilotai.app/og-image.png'],
+    images: ['https://www.planpilotai.app/og-image.png'],
   },
 }
 
