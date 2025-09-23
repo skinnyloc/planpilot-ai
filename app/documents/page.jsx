@@ -352,17 +352,69 @@ export default function DocumentsPage() {
         proposals: 0
     });
 
-    useEffect(() => {
-        // Start with empty documents list for production
-        setDocuments([]);
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
 
-        // Initialize empty stats
-        setStats({
-            totalDocuments: 0,
-            totalSize: '0 MB',
-            businessPlans: 0,
-            proposals: 0
-        });
+    useEffect(() => {
+        // Load documents from localStorage
+        const storedDocuments = localStorage.getItem('userDocuments');
+        if (storedDocuments) {
+            const parsedDocs = JSON.parse(storedDocuments);
+
+            // Fix any duplicate IDs from old data
+            const fixedDocs = parsedDocs.map((doc, index) => {
+                if (!doc.id || typeof doc.id === 'number' || parsedDocs.findIndex(d => d.id === doc.id) !== index) {
+                    const timestamp = Date.now() + index;
+                    const random = Math.floor(Math.random() * 10000);
+                    return {
+                        ...doc,
+                        id: `${timestamp}_${random}`
+                    };
+                }
+                return doc;
+            });
+
+            // Save fixed data back to localStorage
+            if (JSON.stringify(fixedDocs) !== JSON.stringify(parsedDocs)) {
+                localStorage.setItem('userDocuments', JSON.stringify(fixedDocs));
+            }
+
+            setDocuments(fixedDocs);
+
+            // Calculate stats for loaded documents
+            const businessPlanCount = fixedDocs.filter(d => d.type.includes('Business Plan')).length;
+            const proposalCount = fixedDocs.filter(d => d.type.includes('Proposal')).length;
+            const totalSizeBytes = fixedDocs.reduce((sum, doc) => {
+                const sizeStr = doc.file_size;
+                const sizeNum = parseFloat(sizeStr);
+                const unit = sizeStr.split(' ')[1];
+                let bytes = sizeNum;
+                if (unit === 'KB') bytes = sizeNum * 1024;
+                else if (unit === 'MB') bytes = sizeNum * 1024 * 1024;
+                else if (unit === 'GB') bytes = sizeNum * 1024 * 1024 * 1024;
+                return sum + bytes;
+            }, 0);
+
+            setStats({
+                totalDocuments: fixedDocs.length,
+                totalSize: formatFileSize(totalSizeBytes),
+                businessPlans: businessPlanCount,
+                proposals: proposalCount
+            });
+        } else {
+            // Initialize empty stats
+            setStats({
+                totalDocuments: 0,
+                totalSize: '0 MB',
+                businessPlans: 0,
+                proposals: 0
+            });
+        }
     }, []);
 
     const handleUpload = async () => {
@@ -381,9 +433,11 @@ export default function DocumentsPage() {
             input.onchange = (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    // Create new document object
+                    // Create new document object with unique ID
+                    const timestamp = Date.now();
+                    const random = Math.floor(Math.random() * 10000);
                     const newDocument = {
-                        id: Date.now(),
+                        id: `${timestamp}_${random}`,
                         name: file.name,
                         type: file.type.includes('pdf') ? 'PDF Document' :
                               file.type.includes('word') ? 'Word Document' :
@@ -398,6 +452,9 @@ export default function DocumentsPage() {
                     // Add to documents list
                     setDocuments(prev => {
                         const updatedDocs = [newDocument, ...prev];
+
+                        // Save to localStorage
+                        localStorage.setItem('userDocuments', JSON.stringify(updatedDocs));
 
                         // Calculate updated stats
                         const businessPlanCount = updatedDocs.filter(d => d.type.includes('Business Plan')).length;
@@ -420,6 +477,36 @@ export default function DocumentsPage() {
                             proposals: proposalCount
                         });
 
+                        // If it's a PDF, also add to business ideas for use in other sections
+                        if (file.type.includes('pdf')) {
+                            const businessIdeas = JSON.parse(localStorage.getItem('businessIdeas') || '[]');
+                            const businessTimestamp = Date.now() + 1;
+                            const businessRandom = Math.floor(Math.random() * 10000);
+                            const newBusinessIdea = {
+                                id: `${businessTimestamp}_${businessRandom}`,
+                                business_name: file.name.replace('.pdf', ''),
+                                business_address: '',
+                                years_in_business: 0,
+                                problem_solved: 'Imported from PDF document',
+                                concept: 'Business plan imported from uploaded PDF',
+                                mission_statement: '',
+                                target_market: '',
+                                business_goals: '',
+                                industry: '',
+                                startup_costs: '',
+                                revenue_model: '',
+                                competitive_advantage: '',
+                                location: '',
+                                extra_prompt: `Original PDF: ${file.name}`,
+                                source: 'pdf_upload',
+                                pdf_document_id: newDocument.id,
+                                createdAt: new Date().toLocaleDateString(),
+                                updatedAt: new Date().toLocaleDateString()
+                            };
+                            businessIdeas.push(newBusinessIdea);
+                            localStorage.setItem('businessIdeas', JSON.stringify(businessIdeas));
+                        }
+
                         return updatedDocs;
                     });
                 }
@@ -441,14 +528,6 @@ export default function DocumentsPage() {
             console.error('Upload error:', error);
             setIsUploading(false);
         }
-    };
-
-    const formatFileSize = (bytes) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
     const handleView = (document) => {
@@ -567,7 +646,42 @@ startxref
 
     const handleDelete = (document) => {
         if (confirm(`Are you sure you want to delete "${document.name}"?`)) {
-            setDocuments(prev => prev.filter(d => d.id !== document.id));
+            setDocuments(prev => {
+                const updatedDocs = prev.filter(d => d.id !== document.id);
+
+                // Save to localStorage
+                localStorage.setItem('userDocuments', JSON.stringify(updatedDocs));
+
+                // If this document was linked to a business idea, remove that too
+                if (document.source === 'pdf_upload' || document.pdf_document_id) {
+                    const businessIdeas = JSON.parse(localStorage.getItem('businessIdeas') || '[]');
+                    const filteredIdeas = businessIdeas.filter(idea => idea.pdf_document_id !== document.id);
+                    localStorage.setItem('businessIdeas', JSON.stringify(filteredIdeas));
+                }
+
+                // Update stats
+                const businessPlanCount = updatedDocs.filter(d => d.type.includes('Business Plan')).length;
+                const proposalCount = updatedDocs.filter(d => d.type.includes('Proposal')).length;
+                const totalSizeBytes = updatedDocs.reduce((sum, doc) => {
+                    const sizeStr = doc.file_size;
+                    const sizeNum = parseFloat(sizeStr);
+                    const unit = sizeStr.split(' ')[1];
+                    let bytes = sizeNum;
+                    if (unit === 'KB') bytes = sizeNum * 1024;
+                    else if (unit === 'MB') bytes = sizeNum * 1024 * 1024;
+                    else if (unit === 'GB') bytes = sizeNum * 1024 * 1024 * 1024;
+                    return sum + bytes;
+                }, 0);
+
+                setStats({
+                    totalDocuments: updatedDocs.length,
+                    totalSize: formatFileSize(totalSizeBytes),
+                    businessPlans: businessPlanCount,
+                    proposals: proposalCount
+                });
+
+                return updatedDocs;
+            });
         }
     };
 
@@ -810,9 +924,9 @@ startxref
             {/* Documents List */}
             <div>
                 {filteredDocuments.length > 0 ? (
-                    filteredDocuments.map(doc => (
+                    filteredDocuments.map((doc, index) => (
                         <DocumentCard
-                            key={doc.id}
+                            key={`${doc.id}_${index}`}
                             document={doc}
                             onView={handleView}
                             onDownload={handleDownload}

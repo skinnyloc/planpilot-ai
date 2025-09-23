@@ -16,7 +16,27 @@ export default function BusinessIdeaPage() {
   const loadIdeas = async () => {
     const stored = localStorage.getItem('businessIdeas');
     if (stored) {
-      setIdeas(JSON.parse(stored));
+      const parsedIdeas = JSON.parse(stored);
+
+      // Fix any duplicate IDs from old data
+      const fixedIdeas = parsedIdeas.map((idea, index) => {
+        if (!idea.id || typeof idea.id === 'number' || parsedIdeas.findIndex(i => i.id === idea.id) !== index) {
+          const timestamp = Date.now() + index;
+          const random = Math.floor(Math.random() * 10000);
+          return {
+            ...idea,
+            id: `${timestamp}_${random}`
+          };
+        }
+        return idea;
+      });
+
+      // Save fixed data back to localStorage
+      if (JSON.stringify(fixedIdeas) !== JSON.stringify(parsedIdeas)) {
+        localStorage.setItem('businessIdeas', JSON.stringify(fixedIdeas));
+      }
+
+      setIdeas(fixedIdeas);
     }
   };
 
@@ -69,11 +89,13 @@ export default function BusinessIdeaPage() {
     if (!currentIdea || !validate()) return;
     setIsSaving(true);
 
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
     const dataToSave = {
       ...currentIdea,
       startup_costs: Number(currentIdea.startup_costs) || 0,
       years_in_business: Number(currentIdea.years_in_business) || 0,
-      id: currentIdea.id || Date.now(),
+      id: currentIdea.id || `${timestamp}_${random}`,
       createdAt: currentIdea.createdAt || new Date().toLocaleDateString(),
       updatedAt: new Date().toLocaleDateString()
     };
@@ -87,6 +109,28 @@ export default function BusinessIdeaPage() {
 
     setIdeas(updatedIdeas);
     localStorage.setItem('businessIdeas', JSON.stringify(updatedIdeas));
+
+    // Auto-save to documents section if new business idea
+    if (!currentIdea.id && !currentIdea.source) {
+      const existingDocuments = JSON.parse(localStorage.getItem('userDocuments') || '[]');
+      const docTimestamp = Date.now() + 2;
+      const docRandom = Math.floor(Math.random() * 10000);
+      const newDocument = {
+        id: `${docTimestamp}_${docRandom}`,
+        name: `${dataToSave.business_name} - Business Plan`,
+        type: "Business Plan",
+        file_size: "0 KB",
+        created_date: new Date().toISOString(),
+        description: `Business plan for ${dataToSave.business_name}`,
+        pdf_content: null,
+        file_object: null,
+        source: 'business_idea',
+        business_idea_id: dataToSave.id
+      };
+      const updatedDocuments = [newDocument, ...existingDocuments];
+      localStorage.setItem('userDocuments', JSON.stringify(updatedDocuments));
+    }
+
     setCurrentIdea(null);
     setIsSaving(false);
   };
@@ -97,6 +141,11 @@ export default function BusinessIdeaPage() {
     const updatedIdeas = ideas.filter(idea => idea.id !== id);
     setIdeas(updatedIdeas);
     localStorage.setItem('businessIdeas', JSON.stringify(updatedIdeas));
+
+    // Also remove related document from documents section
+    const existingDocuments = JSON.parse(localStorage.getItem('userDocuments') || '[]');
+    const filteredDocuments = existingDocuments.filter(doc => doc.business_idea_id !== id);
+    localStorage.setItem('userDocuments', JSON.stringify(filteredDocuments));
 
     if (currentIdea && currentIdea.id === id) {
       setCurrentIdea(null);

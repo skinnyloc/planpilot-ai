@@ -36,10 +36,14 @@ export default function ProfilePage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setProfileData(prev => ({
-            ...prev,
+        const updatedData = {
+            ...profileData,
             [name]: value
-        }));
+        };
+        setProfileData(updatedData);
+
+        // Auto-save to localStorage on every change
+        localStorage.setItem('userProfile', JSON.stringify(updatedData));
     };
 
     const handleSave = async () => {
@@ -149,13 +153,13 @@ export default function ProfilePage() {
                         Manage your personal and business information.
                     </p>
                 </div>
-                {!isEditing ? (
+                <div style={{ display: 'flex', gap: '12px' }}>
                     <button
-                        onClick={() => setIsEditing(true)}
+                        onClick={() => setIsEditing(!isEditing)}
                         style={{
-                            backgroundColor: '#f59e0b',
-                            color: '#000',
-                            border: 'none',
+                            backgroundColor: 'transparent',
+                            color: '#f59e0b',
+                            border: '1px solid #f59e0b',
                             borderRadius: '8px',
                             padding: '12px 20px',
                             fontSize: '14px',
@@ -167,48 +171,30 @@ export default function ProfilePage() {
                         }}
                     >
                         <Edit3 style={{ width: '16px', height: '16px' }} />
-                        Edit Profile
+                        {isEditing ? 'Done Editing' : 'Edit Profile'}
                     </button>
-                ) : (
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                        <button
-                            onClick={handleCancel}
-                            style={{
-                                backgroundColor: 'transparent',
-                                color: '#f59e0b',
-                                border: '1px solid #f59e0b',
-                                borderRadius: '8px',
-                                padding: '12px 20px',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={handleSave}
-                            disabled={isSaving}
-                            style={{
-                                backgroundColor: '#f59e0b',
-                                color: '#000',
-                                border: 'none',
-                                borderRadius: '8px',
-                                padding: '12px 20px',
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                cursor: isSaving ? 'not-allowed' : 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                opacity: isSaving ? 0.7 : 1
-                            }}
-                        >
-                            <Save style={{ width: '16px', height: '16px' }} />
-                            {isSaving ? 'Saving...' : 'Save Changes'}
-                        </button>
-                    </div>
-                )}
+                    <button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        style={{
+                            backgroundColor: '#f59e0b',
+                            color: '#000',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '12px 20px',
+                            fontSize: '14px',
+                            fontWeight: '600',
+                            cursor: isSaving ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            opacity: isSaving ? 0.7 : 1
+                        }}
+                    >
+                        <Save style={{ width: '16px', height: '16px' }} />
+                        {isSaving ? 'Saving...' : 'Save Profile'}
+                    </button>
+                </div>
             </div>
 
             {message && (

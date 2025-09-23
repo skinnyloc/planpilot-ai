@@ -8,7 +8,33 @@ export default function DashboardPage() {
   const [ideaCount, setIdeaCount] = useState(0);
 
   useEffect(() => {
-    setIdeaCount(2);
+    // Load actual business ideas count from localStorage
+    const loadIdeaCount = () => {
+      const stored = localStorage.getItem('businessIdeas');
+      if (stored) {
+        const ideas = JSON.parse(stored);
+        setIdeaCount(ideas.length);
+      } else {
+        setIdeaCount(0);
+      }
+    };
+
+    loadIdeaCount();
+
+    // Listen for localStorage changes to keep count in sync
+    const handleStorageChange = () => {
+      loadIdeaCount();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check periodically in case localStorage was updated in same tab
+    const interval = setInterval(loadIdeaCount, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   const actions = [
