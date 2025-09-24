@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Upload, FileText, Download, Eye, Trash2, Edit3, Calendar, User, Building } from 'lucide-react';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
 const DocumentCard = ({ document, onView, onDelete, onDownload }) => (
     <div style={{
@@ -336,7 +337,7 @@ const DocumentViewer = ({ document, onClose }) => (
     </div>
 );
 
-export default function DocumentsPage() {
+function DocumentsContent() {
     const [documents, setDocuments] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const [filters, setFilters] = useState({
@@ -966,5 +967,13 @@ startxref
                 />
             )}
         </div>
+    );
+}
+
+export default function DocumentsPage() {
+    return (
+        <ProtectedRoute>
+            <DocumentsContent />
+        </ProtectedRoute>
     );
 }

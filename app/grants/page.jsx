@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Search, AlertCircle, CalendarIcon, RefreshCw, ExternalLink } from 'lucide-react';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
 const GrantCard = ({ grant }) => (
     <div style={{
@@ -85,7 +86,7 @@ const GrantCard = ({ grant }) => (
     </div>
 );
 
-export default function GrantsPage() {
+function GrantsContent() {
     const [allGrants, setAllGrants] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -481,5 +482,13 @@ export default function GrantsPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function GrantsPage() {
+    return (
+        <ProtectedRoute>
+            <GrantsContent />
+        </ProtectedRoute>
     );
 }

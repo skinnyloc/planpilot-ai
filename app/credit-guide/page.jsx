@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Wand2, Loader2, BookOpen, Target, Download } from 'lucide-react';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
 const CreditEducationContent = () => (
     <div style={{
@@ -79,7 +80,7 @@ const CreditEducationContent = () => (
     </div>
 );
 
-export default function CreditGuidePage() {
+function CreditGuideContent() {
     const [generatedRoadmap, setGeneratedRoadmap] = useState(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [activeTab, setActiveTab] = useState('education');
@@ -389,5 +390,13 @@ Remember: Building business credit is a marathon, not a sprint. Consistency and 
                 </div>
             )}
         </div>
+    );
+}
+
+export default function CreditGuidePage() {
+    return (
+        <ProtectedRoute>
+            <CreditGuideContent />
+        </ProtectedRoute>
     );
 }

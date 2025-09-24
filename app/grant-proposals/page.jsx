@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Wand2, Loader2, Download, AlertCircle, ExternalLink, Edit3, Trash2, Save, X } from 'lucide-react';
 import jsPDF from 'jspdf';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
 const GrantList = ({ onSelect, selectedGrantId }) => {
     const [grants, setGrants] = useState([]);
@@ -104,7 +105,7 @@ const GrantList = ({ onSelect, selectedGrantId }) => {
     );
 };
 
-export default function GrantProposalsPage() {
+function GrantProposalsContent() {
     const [businessPlans, setBusinessPlans] = useState([]);
     const [selectedBusinessPlan, setSelectedBusinessPlan] = useState(null);
     const [selectedGrant, setSelectedGrant] = useState(null);
@@ -859,5 +860,13 @@ Proposal Type: ${selectedProposalMode} Funding Request
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function GrantProposalsPage() {
+    return (
+        <ProtectedRoute>
+            <GrantProposalsContent />
+        </ProtectedRoute>
     );
 }
