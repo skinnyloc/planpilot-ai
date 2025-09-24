@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Save, User, Mail, Phone, MapPin, Building, Calendar, Edit3 } from 'lucide-react';
+import { useAuth } from '@/lib/context/AuthContext';
 
 // Move Field component outside to prevent re-renders
 const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isTextarea = false, placeholder = "", required = false, isEditing }) => (
@@ -27,6 +28,7 @@ const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isText
                 placeholder={placeholder}
                 disabled={!isEditing}
                 rows={4}
+                suppressHydrationWarning={true}
                 style={{
                     width: '100%',
                     padding: '12px',
@@ -48,6 +50,7 @@ const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isText
                 onChange={onChange}
                 placeholder={placeholder}
                 disabled={!isEditing}
+                suppressHydrationWarning={true}
                 style={{
                     width: '100%',
                     padding: '12px',
@@ -65,6 +68,8 @@ const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isText
 );
 
 export default function ProfilePage() {
+    const { user, userMetadata } = useAuth();
+
     const [profileData, setProfileData] = useState({
         firstName: '',
         lastName: '',
@@ -88,12 +93,47 @@ export default function ProfilePage() {
     const [message, setMessage] = useState('');
 
     useEffect(() => {
-        // Load profile from localStorage
-        const stored = localStorage.getItem('userProfile');
-        if (stored) {
-            setProfileData(JSON.parse(stored));
+        // Initialize profile with user data from Supabase and localStorage
+        const initializeProfile = () => {
+            // Load from localStorage first
+            const stored = localStorage.getItem('userProfile');
+            let storedData = {};
+            if (stored) {
+                storedData = JSON.parse(stored);
+            }
+
+            // Merge with Supabase user data, giving preference to existing localStorage data
+            const initialData = {
+                firstName: storedData.firstName || userMetadata?.first_name || '',
+                lastName: storedData.lastName || userMetadata?.last_name || '',
+                email: storedData.email || user?.email || '',
+                phone: storedData.phone || '',
+                address: storedData.address || '',
+                city: storedData.city || '',
+                state: storedData.state || '',
+                zipCode: storedData.zipCode || '',
+                businessName: storedData.businessName || '',
+                businessType: storedData.businessType || '',
+                industry: storedData.industry || '',
+                yearsInBusiness: storedData.yearsInBusiness || '',
+                employeeCount: storedData.employeeCount || '',
+                website: storedData.website || '',
+                bio: storedData.bio || ''
+            };
+
+            setProfileData(initialData);
+
+            // Save the merged data to localStorage if we got new data from Supabase
+            if (userMetadata?.first_name && !storedData.firstName) {
+                localStorage.setItem('userProfile', JSON.stringify(initialData));
+            }
+        };
+
+        // Only initialize when we have user data
+        if (user) {
+            initializeProfile();
         }
-    }, []);
+    }, [user, userMetadata]);
 
     const handleInputChange = useCallback((e) => {
         const { name, value } = e.target;

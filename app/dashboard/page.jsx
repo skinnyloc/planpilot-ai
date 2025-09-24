@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Building2, FileText, DollarSign, CreditCard, ArrowRight, Plus } from 'lucide-react';
+import { Building2, FileText, DollarSign, CreditCard, ArrowRight, Plus, LogOut } from 'lucide-react';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
+import { useAuth } from '@/lib/context/AuthContext';
 
-export default function DashboardPage() {
+function DashboardContent() {
+  const { user, userMetadata, signOut } = useAuth();
   const [ideaCount, setIdeaCount] = useState(0);
 
   useEffect(() => {
@@ -47,14 +50,46 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div>
-        <h1 style={{
-          fontSize: '2rem',
-          fontWeight: 'bold',
-          color: '#fafafa',
-          marginBottom: '8px'
-        }}>
-          Welcome to Your Business Hub
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              color: '#fafafa',
+              marginBottom: '8px'
+            }}>
+              Welcome Back, {userMetadata.first_name || user?.email?.split('@')[0] || 'User'}!
+            </h1>
+          </div>
+          <button
+            onClick={signOut}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#999',
+              border: '1px solid #333',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.borderColor = '#f59e0b';
+              e.target.style.color = '#f59e0b';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.borderColor = '#333';
+              e.target.style.color = '#999';
+            }}
+          >
+            <LogOut size={16} />
+            Sign Out
+          </button>
+        </div>
         <p style={{ color: '#999', fontSize: '1rem', margin: 0 }}>
           Plan, fund, and grow your business, all in one place.
         </p>
@@ -187,5 +222,13 @@ export default function DashboardPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   );
 }

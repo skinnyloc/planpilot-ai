@@ -1,9 +1,12 @@
 "use client";
 
 import MainLayout from './MainLayout';
-
+import { AuthProvider } from '@/lib/context/AuthContext';
 
 export default function LayoutWrapper({ children }) {
-  // NO AUTHENTICATION - EVERYONE CAN ACCESS THE SITE
-  return <MainLayout>{children}</MainLayout>;
+  return (
+    <AuthProvider>
+      <MainLayout>{children}</MainLayout>
+    </AuthProvider>
+  );
 }

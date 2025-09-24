@@ -4,7 +4,7 @@ import LayoutWrapper from '../components/LayoutWrapper'
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body suppressHydrationWarning={true}>
         <LayoutWrapper>
           {children}
         </LayoutWrapper>
