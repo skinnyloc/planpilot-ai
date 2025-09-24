@@ -349,7 +349,7 @@ export default function PricingPage() {
                     />
 
                     {/* Fallback button if PayPal doesn't load */}
-                    {!window.paypal && (
+                    {typeof window !== 'undefined' && !window.paypal && (
                         <button style={{
                             width: '100%',
                             padding: '14px 24px',
