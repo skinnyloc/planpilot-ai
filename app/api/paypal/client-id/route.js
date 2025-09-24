@@ -4,10 +4,23 @@ export async function GET() {
     try {
         const clientId = process.env.PAYPAL_CLIENT_ID;
 
-        if (!clientId) {
-            console.error('PayPal Client ID not found in environment variables');
+        // Check if we're in development with placeholder values
+        if (!clientId || clientId === 'your-paypal-client-id') {
+            console.warn('PayPal Client ID not configured for local development');
             return NextResponse.json(
-                { error: 'PayPal configuration missing' },
+                {
+                    error: 'PayPal not configured for localhost',
+                    message: 'PayPal integration requires real credentials on live site'
+                },
+                { status: 503 }
+            );
+        }
+
+        // Validate client ID format (basic check)
+        if (!clientId.startsWith('A') || clientId.length < 50) {
+            console.error('Invalid PayPal Client ID format');
+            return NextResponse.json(
+                { error: 'Invalid PayPal configuration' },
                 { status: 500 }
             );
         }

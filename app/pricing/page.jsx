@@ -17,6 +17,9 @@ export default function PricingPage() {
                 const data = await response.json();
                 if (data.clientId) {
                     setClientId(data.clientId);
+                } else if (data.error) {
+                    console.warn('PayPal not configured:', data.message || data.error);
+                    // Don't set clientId - this will show fallback message
                 }
             } catch (error) {
                 console.error('Failed to fetch PayPal client ID:', error);
@@ -349,24 +352,25 @@ export default function PricingPage() {
                     />
 
                     {/* Fallback button if PayPal doesn't load */}
-                    {typeof window !== 'undefined' && !window.paypal && (
+                    {!clientId && (
                         <button style={{
                             width: '100%',
                             padding: '14px 24px',
-                            backgroundColor: '#f59e0b',
-                            color: '#000',
+                            backgroundColor: '#666',
+                            color: '#fff',
                             border: 'none',
                             borderRadius: '8px',
                             fontSize: '16px',
                             fontWeight: '600',
-                            cursor: 'pointer',
+                            cursor: 'not-allowed',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '8px'
+                            gap: '8px',
+                            opacity: 0.7
                         }}>
                             <Zap style={{ width: '16px', height: '16px' }} />
-                            Loading Payment Options...
+                            PayPal Available on Live Site
                         </button>
                     )}
                 </div>
