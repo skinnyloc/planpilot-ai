@@ -1,8 +1,60 @@
 "use client";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/context/AuthContext';
 import Link from 'next/link';
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
+  useEffect(() => {
+    // If not loading and no user, redirect to login
+    if (!loading && !user) {
+      router.push('/login');
+      return;
+    }
+  }, [user, loading, router]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0a0a0a',
+        color: '#fafafa'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #333',
+            borderTop: '4px solid #f59e0b',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p style={{ color: '#999' }}>Loading...</p>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // If no user, don't render anything (will redirect)
+  if (!user) {
+    return null;
+  }
+
+  // User is authenticated, show the landing page
   return (
     <div style={{
       minHeight: '100vh',

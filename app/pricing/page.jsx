@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Check, Star, Zap, Shield, Crown } from 'lucide-react';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
-export default function PricingPage() {
+function PricingContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [clientId, setClientId] = useState(null);
     const paypalButtonRef = useRef(null);
@@ -507,5 +508,13 @@ export default function PricingPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function PricingPage() {
+    return (
+        <ProtectedRoute>
+            <PricingContent />
+        </ProtectedRoute>
     );
 }

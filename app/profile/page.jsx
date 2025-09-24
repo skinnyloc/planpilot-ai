@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Save, User, Mail, Phone, MapPin, Building, Calendar, Edit3 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
 // Move Field component outside to prevent re-renders
 const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isTextarea = false, placeholder = "", required = false, isEditing }) => (
@@ -67,7 +68,7 @@ const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isText
     </div>
 );
 
-export default function ProfilePage() {
+function ProfileContent() {
     const { user, userMetadata } = useAuth();
 
     const [profileData, setProfileData] = useState({
@@ -463,5 +464,13 @@ export default function ProfilePage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ProfilePage() {
+    return (
+        <ProtectedRoute>
+            <ProfileContent />
+        </ProtectedRoute>
     );
 }

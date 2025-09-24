@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Save, Trash2, Plus } from 'lucide-react';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
 // Move Field component outside to prevent re-renders
 const Field = ({ id, label, value, onChange, type = "text", isTextarea = false, required = false, placeholder = "", error = null }) => (
@@ -59,7 +60,7 @@ const Field = ({ id, label, value, onChange, type = "text", isTextarea = false, 
   </div>
 );
 
-export default function BusinessIdeaPage() {
+function BusinessIdeaContent() {
   const [ideas, setIdeas] = useState([]);
   const [currentIdea, setCurrentIdea] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -526,5 +527,13 @@ export default function BusinessIdeaPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BusinessIdeaPage() {
+  return (
+    <ProtectedRoute>
+      <BusinessIdeaContent />
+    </ProtectedRoute>
   );
 }

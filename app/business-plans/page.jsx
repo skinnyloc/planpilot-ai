@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Wand2, Loader2, FileText, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
+import ProtectedRoute from '@/lib/components/ProtectedRoute';
 
-export default function BusinessPlansPage() {
+function BusinessPlansContent() {
     const [ideas, setIdeas] = useState([]);
     const [selectedIdeaId, setSelectedIdeaId] = useState('');
     const [generatedPlan, setGeneratedPlan] = useState(null);
@@ -486,5 +487,13 @@ With the right support and execution of this business plan, we are confident in 
                 </div>
             )}
         </div>
+    );
+}
+
+export default function BusinessPlansPage() {
+    return (
+        <ProtectedRoute>
+            <BusinessPlansContent />
+        </ProtectedRoute>
     );
 }
