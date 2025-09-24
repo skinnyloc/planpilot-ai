@@ -1,7 +1,63 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Save, Trash2, Plus } from 'lucide-react';
+
+// Move Field component outside to prevent re-renders
+const Field = ({ id, label, value, onChange, type = "text", isTextarea = false, required = false, placeholder = "", error = null }) => (
+  <div style={{ marginBottom: '20px' }}>
+    <label style={{
+      display: 'block',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#ccc',
+      marginBottom: '6px'
+    }}>
+      {label}{required && ' *'}
+    </label>
+    {isTextarea ? (
+      <textarea
+        id={id}
+        name={id}
+        value={value || ""}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows={3}
+        style={{
+          width: '100%',
+          padding: '12px',
+          border: error ? '2px solid #ff6b6b' : '1px solid #f59e0b',
+          borderRadius: '8px',
+          backgroundColor: '#000',
+          color: '#fff',
+          fontSize: '14px',
+          resize: 'vertical',
+          outline: 'none'
+        }}
+      />
+    ) : (
+      <input
+        id={id}
+        name={id}
+        type={type}
+        value={value || ""}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={{
+          width: '100%',
+          padding: '12px',
+          border: error ? '2px solid #ff6b6b' : '1px solid #f59e0b',
+          borderRadius: '8px',
+          backgroundColor: '#000',
+          color: '#fff',
+          fontSize: '14px',
+          outline: 'none'
+        }}
+      />
+    )}
+    {error && <p style={{ color: '#ff6b6b', fontSize: '12px', marginTop: '4px', margin: '4px 0 0' }}>{error}</p>}
+  </div>
+);
 
 export default function BusinessIdeaPage() {
   const [ideas, setIdeas] = useState([]);
@@ -80,10 +136,10 @@ export default function BusinessIdeaPage() {
     setErrors({});
   };
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setCurrentIdea(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
 
   const handleSave = async () => {
     if (!currentIdea || !validate()) return;
@@ -152,60 +208,6 @@ export default function BusinessIdeaPage() {
     }
   };
 
-  const Field = ({ id, label, value, onChange, type = "text", isTextarea = false, required = false, placeholder = "", error = null }) => (
-    <div style={{ marginBottom: '20px' }}>
-      <label style={{
-        display: 'block',
-        fontSize: '14px',
-        fontWeight: '500',
-        color: '#ccc',
-        marginBottom: '6px'
-      }}>
-        {label}{required && ' *'}
-      </label>
-      {isTextarea ? (
-        <textarea
-          id={id}
-          name={id}
-          value={value || ""}
-          onChange={onChange}
-          placeholder={placeholder}
-          rows={3}
-          style={{
-            width: '100%',
-            padding: '12px',
-            border: error ? '2px solid #ff6b6b' : '1px solid #f59e0b',
-            borderRadius: '8px',
-            backgroundColor: '#000',
-            color: '#fff',
-            fontSize: '14px',
-            resize: 'vertical',
-            outline: 'none'
-          }}
-        />
-      ) : (
-        <input
-          id={id}
-          name={id}
-          type={type}
-          value={value || ""}
-          onChange={onChange}
-          placeholder={placeholder}
-          style={{
-            width: '100%',
-            padding: '12px',
-            border: error ? '2px solid #ff6b6b' : '1px solid #f59e0b',
-            borderRadius: '8px',
-            backgroundColor: '#000',
-            color: '#fff',
-            fontSize: '14px',
-            outline: 'none'
-          }}
-        />
-      )}
-      {error && <p style={{ color: '#ff6b6b', fontSize: '12px', marginTop: '4px', margin: '4px 0 0' }}>{error}</p>}
-    </div>
-  );
 
   return (
     <div style={{ padding: '32px' }}>

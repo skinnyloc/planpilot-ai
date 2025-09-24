@@ -7,11 +7,8 @@ export default function PayPalSubscriptionButton({ billingCycle = 'monthly', onS
   const [isLoaded, setIsLoaded] = useState(false);
   const [clientId, setClientId] = useState(null);
 
-  // PayPal Plan IDs
-  const planIds = {
-    monthly: 'P-021407488D8484329NDEOG2A',
-    yearly: 'P-5HR698674T6427033NDEOFSY'
-  };
+  // PayPal Plan ID for $19.99 monthly subscription
+  const planId = 'P-021407488D8484329NDEOG2A';
 
   useEffect(() => {
     // Fetch PayPal client ID securely
@@ -67,7 +64,7 @@ export default function PayPalSubscriptionButton({ billingCycle = 'monthly', onS
           createSubscription: function(data, actions) {
             return actions.subscription.create({
               /* Creates the subscription */
-              plan_id: planIds[billingCycle]
+              plan_id: planId
             });
           },
           onApprove: function(data, actions) {

@@ -1,7 +1,68 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Save, User, Mail, Phone, MapPin, Building, Calendar, Edit3 } from 'lucide-react';
+
+// Move Field component outside to prevent re-renders
+const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isTextarea = false, placeholder = "", required = false, isEditing }) => (
+    <div style={{ marginBottom: '20px' }}>
+        <label style={{
+            display: 'block',
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#ccc',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+        }}>
+            <Icon style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
+            {label}{required && ' *'}
+        </label>
+        {isTextarea ? (
+            <textarea
+                name={name}
+                value={value || ""}
+                onChange={onChange}
+                placeholder={placeholder}
+                disabled={!isEditing}
+                rows={4}
+                style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #f59e0b',
+                    borderRadius: '8px',
+                    backgroundColor: isEditing ? '#000' : '#1a1a1a',
+                    color: '#fff',
+                    fontSize: '14px',
+                    resize: 'vertical',
+                    outline: 'none',
+                    opacity: isEditing ? 1 : 0.7
+                }}
+            />
+        ) : (
+            <input
+                type={type}
+                name={name}
+                value={value || ""}
+                onChange={onChange}
+                placeholder={placeholder}
+                disabled={!isEditing}
+                style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #f59e0b',
+                    borderRadius: '8px',
+                    backgroundColor: isEditing ? '#000' : '#1a1a1a',
+                    color: '#fff',
+                    fontSize: '14px',
+                    outline: 'none',
+                    opacity: isEditing ? 1 : 0.7
+                }}
+            />
+        )}
+    </div>
+);
 
 export default function ProfilePage() {
     const [profileData, setProfileData] = useState({
@@ -34,7 +95,7 @@ export default function ProfilePage() {
         }
     }, []);
 
-    const handleInputChange = (e) => {
+    const handleInputChange = useCallback((e) => {
         const { name, value } = e.target;
         const updatedData = {
             ...profileData,
@@ -44,7 +105,7 @@ export default function ProfilePage() {
 
         // Auto-save to localStorage on every change
         localStorage.setItem('userProfile', JSON.stringify(updatedData));
-    };
+    }, [profileData]);
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -72,65 +133,6 @@ export default function ProfilePage() {
         setIsEditing(false);
     };
 
-    const Field = ({ icon: Icon, label, name, value, onChange, type = "text", isTextarea = false, placeholder = "", required = false }) => (
-        <div style={{ marginBottom: '20px' }}>
-            <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: '500',
-                color: '#ccc',
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px'
-            }}>
-                <Icon style={{ width: '16px', height: '16px', color: '#f59e0b' }} />
-                {label}{required && ' *'}
-            </label>
-            {isTextarea ? (
-                <textarea
-                    name={name}
-                    value={value || ""}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    disabled={!isEditing}
-                    rows={4}
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid #f59e0b',
-                        borderRadius: '8px',
-                        backgroundColor: isEditing ? '#000' : '#1a1a1a',
-                        color: '#fff',
-                        fontSize: '14px',
-                        resize: 'vertical',
-                        outline: 'none',
-                        opacity: isEditing ? 1 : 0.7
-                    }}
-                />
-            ) : (
-                <input
-                    type={type}
-                    name={name}
-                    value={value || ""}
-                    onChange={onChange}
-                    placeholder={placeholder}
-                    disabled={!isEditing}
-                    style={{
-                        width: '100%',
-                        padding: '12px',
-                        border: '1px solid #f59e0b',
-                        borderRadius: '8px',
-                        backgroundColor: isEditing ? '#000' : '#1a1a1a',
-                        color: '#fff',
-                        fontSize: '14px',
-                        outline: 'none',
-                        opacity: isEditing ? 1 : 0.7
-                    }}
-                />
-            )}
-        </div>
-    );
 
     return (
         <div style={{ padding: '32px' }}>
@@ -245,6 +247,7 @@ export default function ProfilePage() {
                             onChange={handleInputChange}
                             placeholder="Enter your first name"
                             required
+                            isEditing={isEditing}
                         />
                         <Field
                             icon={User}
@@ -254,6 +257,7 @@ export default function ProfilePage() {
                             onChange={handleInputChange}
                             placeholder="Enter your last name"
                             required
+                            isEditing={isEditing}
                         />
                     </div>
 
@@ -266,6 +270,7 @@ export default function ProfilePage() {
                         type="email"
                         placeholder="Enter your email address"
                         required
+                        isEditing={isEditing}
                     />
 
                     <Field
@@ -276,6 +281,7 @@ export default function ProfilePage() {
                         onChange={handleInputChange}
                         type="tel"
                         placeholder="Enter your phone number"
+                        isEditing={isEditing}
                     />
 
                     <Field
@@ -285,6 +291,7 @@ export default function ProfilePage() {
                         value={profileData.address}
                         onChange={handleInputChange}
                         placeholder="Enter your street address"
+                        isEditing={isEditing}
                     />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '16px' }}>
@@ -295,6 +302,7 @@ export default function ProfilePage() {
                             value={profileData.city}
                             onChange={handleInputChange}
                             placeholder="Enter your city"
+                            isEditing={isEditing}
                         />
                         <Field
                             icon={MapPin}
@@ -303,6 +311,7 @@ export default function ProfilePage() {
                             value={profileData.state}
                             onChange={handleInputChange}
                             placeholder="State"
+                            isEditing={isEditing}
                         />
                         <Field
                             icon={MapPin}
@@ -311,6 +320,7 @@ export default function ProfilePage() {
                             value={profileData.zipCode}
                             onChange={handleInputChange}
                             placeholder="12345"
+                            isEditing={isEditing}
                         />
                     </div>
                 </div>
@@ -342,6 +352,7 @@ export default function ProfilePage() {
                         value={profileData.businessName}
                         onChange={handleInputChange}
                         placeholder="Enter your business name"
+                        isEditing={isEditing}
                     />
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
@@ -352,6 +363,7 @@ export default function ProfilePage() {
                             value={profileData.businessType}
                             onChange={handleInputChange}
                             placeholder="LLC, Corp, Partnership, etc."
+                            isEditing={isEditing}
                         />
                         <Field
                             icon={Building}
@@ -360,6 +372,7 @@ export default function ProfilePage() {
                             value={profileData.industry}
                             onChange={handleInputChange}
                             placeholder="Technology, Healthcare, etc."
+                            isEditing={isEditing}
                         />
                     </div>
 
@@ -372,6 +385,7 @@ export default function ProfilePage() {
                             onChange={handleInputChange}
                             type="number"
                             placeholder="0"
+                            isEditing={isEditing}
                         />
                         <Field
                             icon={User}
@@ -381,6 +395,7 @@ export default function ProfilePage() {
                             onChange={handleInputChange}
                             type="number"
                             placeholder="1"
+                            isEditing={isEditing}
                         />
                     </div>
 
@@ -392,6 +407,7 @@ export default function ProfilePage() {
                         onChange={handleInputChange}
                         type="url"
                         placeholder="https://www.example.com"
+                        isEditing={isEditing}
                     />
 
                     <Field
@@ -402,6 +418,7 @@ export default function ProfilePage() {
                         onChange={handleInputChange}
                         isTextarea
                         placeholder="Tell us about yourself and your business..."
+                        isEditing={isEditing}
                     />
                 </div>
             </div>
